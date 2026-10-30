@@ -7,7 +7,6 @@ import Chip from '../components/common/Chip';
 import Input from '../components/common/Input';
 import Skeleton from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
-import Alert from '../components/common/Alert';
 import { BOOK_CATEGORIES, formatRupees, getListingImageUrl } from '../lib/utils';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import './HomePage.css';
