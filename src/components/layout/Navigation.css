@@ -1,0 +1,244 @@
+/* Desktop & Header Navbar */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: var(--color-card-bg);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  min-height: 60px;
+}
+
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: var(--color-primary-navy);
+}
+
+.navbar__brand:hover {
+  text-decoration: none;
+}
+
+.navbar__logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-navy);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.navbar__brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary-navy);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.navbar__tagline {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+/* Desktop Links */
+.navbar__desktop-nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.navbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.navbar__link:hover {
+  color: var(--color-primary-navy);
+  background-color: var(--color-soft-blue);
+  text-decoration: none;
+}
+
+.navbar__link.is-active {
+  color: var(--color-primary-navy);
+  background-color: var(--color-soft-blue);
+  font-weight: 600;
+}
+
+.nav-notification-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #F97316;
+  display: inline-block;
+  margin-left: 2px;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+/* User & Auth area */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.navbar__auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.navbar__user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.navbar__profile-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text-main);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background-color: var(--color-soft-blue);
+}
+
+.navbar__profile-link:hover {
+  text-decoration: none;
+  background-color: var(--color-soft-blue-hover);
+}
+
+.navbar__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--color-primary-navy);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar__user-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar__logout-btn {
+  padding: 0 var(--space-2) !important;
+}
+
+@media (min-width: 768px) {
+  .navbar__desktop-nav {
+    display: flex;
+  }
+}
+
+/* ==============================================================================
+   Mobile Bottom Navigation (Fixed bottom bar)
+   Optimized for 360px+ viewport with large touch targets
+   ============================================================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: var(--color-card-bg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  flex: 1;
+  height: 100%;
+  min-width: 60px;
+  min-height: var(--touch-target-min);
+  padding: var(--space-1) 0;
+  transition: color var(--transition-fast);
+}
+
+.bottom-nav__item:hover {
+  text-decoration: none;
+  color: var(--color-primary-navy);
+}
+
+.bottom-nav__item.is-active {
+  color: var(--color-primary-navy);
+  font-weight: 600;
+}
+
+.bottom-nav__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+
+.bottom-nav__sell-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-navy);
+}
+
+.bottom-nav__item--sell.is-active .bottom-nav__sell-badge {
+  color: var(--color-primary-navy);
+}
+
+/* Hide Bottom Nav on desktop */
+@media (min-width: 768px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
