@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { BookMarked, Search, PlusCircle, MessageSquare, User, Shield } from 'lucide-react';
+import { BookMarked, PlusCircle, MessageSquare, User, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../common/Button';
 import './Navigation.css';
@@ -28,10 +28,6 @@ export default function Navbar() {
           <nav className="navbar__desktop-nav" aria-label="Desktop primary navigation">
             <NavLink to="/" end className={({ isActive }) => `navbar__link ${isActive ? 'is-active' : ''}`}>
               Home
-            </NavLink>
-            <NavLink to="/search" className={({ isActive }) => `navbar__link ${isActive ? 'is-active' : ''}`}>
-              <Search size={16} aria-hidden="true" />
-              <span>Search</span>
             </NavLink>
 
             {user && (
