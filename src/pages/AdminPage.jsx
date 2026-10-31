@@ -371,7 +371,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+    <div style={{ maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       {/* Admin Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>

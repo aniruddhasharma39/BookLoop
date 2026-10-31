@@ -9,13 +9,15 @@ export default function Footer() {
         marginTop: 'var(--space-8)',
         borderTop: '1px solid var(--color-border)',
         backgroundColor: 'var(--color-card-bg)',
-        padding: 'var(--space-6) var(--space-4) calc(var(--space-8) + 60px)', // extra bottom padding for mobile bottom nav
+        padding: 'var(--space-6) 0 calc(var(--space-8) + 60px)', // extra bottom padding for mobile bottom nav
       }}
     >
       <div
         style={{
-          maxWidth: '1080px',
+          maxWidth: '1560px',
+          width: '100%',
           margin: '0 auto',
+          padding: '0 clamp(16px, 3.5vw, 48px)',
           display: 'flex',
           flexDirection: 'column',
           gap: 'var(--space-5)',

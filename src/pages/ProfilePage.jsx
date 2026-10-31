@@ -343,53 +343,57 @@ export default function ProfilePage() {
   });
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+    <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       {/* 1. Header Profile Summary */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-primary-navy)',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              fontSize: 'var(--font-size-xl)',
-              fontWeight: 700,
-            }}
-          >
-            {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : <User size={30} />}
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-primary-navy)', margin: 0 }}>
-                {profile?.display_name || user?.email?.split('@')[0] || 'Student Profile'}
-              </h1>
-              <Chip variant={profile?.account_status === 'suspended' ? 'error' : 'success'} size="sm">
-                {profile?.account_status === 'suspended' ? 'Suspended' : 'Active'}
-              </Chip>
+      <Card style={{ padding: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--color-primary-navy)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                fontSize: 'var(--font-size-xl)',
+                fontWeight: 700,
+              }}
+            >
+              {profile?.display_name ? profile.display_name.charAt(0).toUpperCase() : <User size={26} />}
             </div>
-            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
-              {user?.email || 'Logged in user'}
-            </p>
-            {profile?.institutions?.name && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                <School size={13} style={{ color: 'var(--color-primary-navy)' }} />
-                <span>{profile.institutions.name}{profile.institutions.area ? ` (${profile.institutions.area})` : ''}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-primary-navy)', margin: 0, wordBreak: 'break-word' }}>
+                  {profile?.display_name || user?.email?.split('@')[0] || 'Student Profile'}
+                </h1>
+                <Chip variant={profile?.account_status === 'suspended' ? 'error' : 'success'} size="sm">
+                  {profile?.account_status === 'suspended' ? 'Suspended' : 'Active'}
+                </Chip>
               </div>
-            )}
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '2px 0 0 0', wordBreak: 'break-all' }}>
+                {user?.email || 'Logged in user'}
+              </p>
+              {profile?.institutions?.name && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                  <School size={12} style={{ color: 'var(--color-primary-navy)', flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
+                    {profile.institutions.name}{profile.institutions.area ? ` (${profile.institutions.area})` : ''}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        <Button variant="outline" size="sm" onClick={handleSignOut}>
-          <LogOut size={16} />
-          <span>Sign Out</span>
-        </Button>
-      </div>
+          <Button variant="outline" size="sm" onClick={handleSignOut} style={{ flexShrink: 0 }}>
+            <LogOut size={15} />
+            <span>Sign Out</span>
+          </Button>
+        </div>
+      </Card>
 
       {/* Account Suspended Alert Banner */}
       {profile?.account_status === 'suspended' && (
@@ -428,37 +432,83 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      {/* 3. Quick Navigation Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-        <Link to="/requests" style={{ textDecoration: 'none' }}>
-          <Card hoverable style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-4)' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-secondary-soft-blue)', color: 'var(--color-primary-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <MessageSquare size={20} />
+      {/* 3. Quick Navigation Cards - Perfectly Balanced */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'var(--space-3)', alignItems: 'stretch' }}>
+        <Link to="/requests" style={{ display: 'flex', height: '100%', textDecoration: 'none' }}>
+          <Card
+            hoverable
+            style={{
+              flex: 1,
+              width: '100%',
+              minHeight: '74px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              padding: 'var(--space-3)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-secondary-soft-blue)',
+                color: 'var(--color-primary-navy)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <MessageSquare size={18} />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <strong style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-navy)' }}>
-                  Requests
-                </strong>
-              </div>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                Track book handovers
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <strong style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-navy)', display: 'block', lineHeight: 1.2 }}>
+                Requests
+              </strong>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                Track handovers
               </span>
             </div>
           </Card>
         </Link>
 
-        <Link to="/listings/new" style={{ textDecoration: 'none' }}>
-          <Card hoverable style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-4)' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-secondary-soft-blue)', color: 'var(--color-primary-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <PlusCircle size={20} />
+        <Link to="/listings/new" style={{ display: 'flex', height: '100%', textDecoration: 'none' }}>
+          <Card
+            hoverable
+            style={{
+              flex: 1,
+              width: '100%',
+              minHeight: '74px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              padding: 'var(--space-3)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-secondary-soft-blue)',
+                color: 'var(--color-primary-navy)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <PlusCircle size={18} />
             </div>
-            <div>
-              <strong style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-navy)' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <strong style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary-navy)', display: 'block', lineHeight: 1.2 }}>
                 Sell a Book
               </strong>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block' }}>
-                Pass on to a junior
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                Pass to a junior
               </span>
             </div>
           </Card>
@@ -502,28 +552,26 @@ export default function ProfilePage() {
             helperText="Selecting your institution helps campus peers find nearby books."
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-            {/* Course / Class */}
-            <Input
-              label="Course / Class"
-              placeholder="e.g. B.Tech CS, 12th Sci"
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-              helperText="e.g. 2nd Year Mechanical"
-            />
+          {/* Course / Class - Clean dedicated full-width row */}
+          <Input
+            label="Course / Class"
+            placeholder="e.g. B.Tech CS, 12th Sci, 2nd Year Mechanical"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+            helperText="e.g. 2nd Year Mechanical, B.Com 1st Year"
+          />
 
-            {/* Optional Graduation Year */}
-            <Select
-              label="Graduation Year (Optional)"
-              value={gradYear}
-              onChange={(e) => setGradYear(e.target.value)}
-              options={[
-                { value: '', label: 'Select year...' },
-                ...GRADUATION_YEARS.map((y) => ({ value: y, label: `Class of ${y}` })),
-              ]}
-              helperText="Helps juniors connect with seniors"
-            />
-          </div>
+          {/* Optional Graduation Year - Clean dedicated full-width row */}
+          <Select
+            label="Graduation Year (Optional)"
+            value={gradYear}
+            onChange={(e) => setGradYear(e.target.value)}
+            options={[
+              { value: '', label: 'Select year...' },
+              ...GRADUATION_YEARS.map((y) => ({ value: y, label: `Class of ${y}` })),
+            ]}
+            helperText="Helps juniors connect with seniors"
+          />
 
           {/* WhatsApp Handover Contact & Privacy Explanation */}
           <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--space-4)' }}>

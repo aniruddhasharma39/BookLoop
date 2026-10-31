@@ -1,22 +1,12 @@
 import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { BookMarked, Search, PlusCircle, MessageSquare, User, Shield, LogOut } from 'lucide-react';
+import { Link, NavLink } from 'react-router-dom';
+import { BookMarked, Search, PlusCircle, MessageSquare, User, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../common/Button';
 import './Navigation.css';
 
 export default function Navbar() {
-  const { user, profile, isAdmin, signOut, isConfigured, hasUnseenRequests } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (err) {
-      console.error('Failed to log out:', err);
-    }
-  };
+  const { user, profile, isAdmin, isConfigured, hasUnseenRequests } = useAuth();
 
   return (
     <header className="navbar">
@@ -70,25 +60,20 @@ export default function Navbar() {
         {/* Desktop User / Auth Actions */}
         <div className="navbar__actions">
           {user ? (
-            <div className="navbar__user-menu">
-              <Link to="/profile" className="navbar__profile-link" title="View Profile">
-                <div className="navbar__avatar" aria-hidden="true">
-                  <User size={16} />
-                </div>
-                <span className="navbar__user-name">
-                  {profile?.display_name || user.email?.split('@')[0]}
+            <Link
+              to="/profile"
+              className="navbar__avatar-btn"
+              title={`Signed in as ${profile?.display_name || user.email?.split('@')[0] || 'Student'}. View Profile`}
+              aria-label="View Student Profile"
+            >
+              {profile?.display_name ? (
+                <span className="navbar__avatar-letter">
+                  {profile.display_name.charAt(0).toUpperCase()}
                 </span>
-              </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                aria-label="Sign out of BookLoop"
-                className="navbar__logout-btn"
-              >
-                <LogOut size={16} />
-              </Button>
-            </div>
+              ) : (
+                <User size={18} />
+              )}
+            </Link>
           ) : (
             <div className="navbar__auth-buttons">
               <Link to="/login">
