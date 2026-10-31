@@ -54,7 +54,7 @@ export default function Footer() {
               </strong>
             </div>
             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', lineHeight: 1.6, margin: 0 }}>
-              The student-to-student textbook marketplace. Find a book, pass it on, and keep education affordable.
+              A campus knowledge exchange for students. Pass on the textbooks that shaped your learning, empower juniors, save paper, and keep education affordable.
             </p>
           </div>
 
@@ -107,7 +107,7 @@ export default function Footer() {
           }}
         >
           <span>&copy; {new Date().getFullYear()} BookLoop. All rights reserved. Peer-to-peer campus exchange.</span>
-          <span>Affordable education &bull; Sustainable campus exchange</span>
+          <span>Knowledge Continuity &bull; Paper Saved &bull; Fair Campus Exchange</span>
         </div>
       </div>
     </footer>

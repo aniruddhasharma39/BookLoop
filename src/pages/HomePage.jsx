@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, PlusCircle, ArrowRight, ShieldCheck, MapPin, Users, BookOpen, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Search, ArrowRight, ShieldCheck, MapPin, Users, BookOpen, RefreshCw, AlertTriangle } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Chip from '../components/common/Chip';
-import Input from '../components/common/Input';
 import Skeleton from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import { BOOK_CATEGORIES, formatRupees, getListingImageUrl } from '../lib/utils';
@@ -90,28 +89,32 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-badge">
-          <ShieldCheck size={14} />
-          <span>Student-to-student campus marketplace</span>
+          <ShieldCheck size={15} />
+          <span>Campus Knowledge Exchange • Sustainable & Fair</span>
         </div>
         <h1 className="hero-title">
           Find a book. <span className="hero-title__highlight">Pass it on.</span>
         </h1>
         <p className="hero-subtitle">
-          Seniors pass on textbooks they no longer need; juniors save money. Safe campus meetups, zero middlemen fees.
+          Textbooks enlighten our academic journey. Once your course is complete, pass that knowledge on to juniors — keep education affordable, save paper, and recover your costs fairly.
         </p>
 
-        {/* Quick Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="hero-search-form">
-          <Input
+        {/* Unified Elevated Capsule Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="hero-search-capsule" role="search">
+          <div className="hero-search-icon" aria-hidden="true">
+            <Search size={20} />
+          </div>
+          <input
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by title, author, subject, or college..."
-            prefix={<Search size={18} />}
+            placeholder="Search by book title, author, subject, or college..."
             aria-label="Search textbooks"
+            className="hero-search-input"
           />
-          <Button type="submit" variant="primary" size="md">
-            Find Books
-          </Button>
+          <button type="submit" className="hero-search-btn">
+            <span>Find Books</span>
+          </button>
         </form>
 
         <div className="hero-actions">
@@ -249,48 +252,31 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Seller Callout Banner */}
-      <section className="seller-callout-section">
-        <div className="seller-callout-card">
-          <div className="seller-callout-content">
-            <span className="seller-callout-badge">For Seniors & Graduating Students</span>
-            <h3 className="seller-callout-title">Have textbooks collecting dust on your shelf?</h3>
-            <p className="seller-callout-desc">
-              Pass them on to juniors at your college, earn pocket money back, and keep textbook costs affordable for your campus.
-            </p>
-          </div>
-          <Link to="/listings/new" className="seller-callout-cta">
-            <PlusCircle size={20} />
-            <span>List a Book in 60s</span>
-          </Link>
-        </div>
-      </section>
-
-      {/* Trust & Safety Campus Info Banner */}
+      {/* Knowledge Continuity & Campus Value Banner */}
       <section className="campus-safety-banner">
         <Card className="safety-card">
           <div className="safety-card__header">
             <Users size={24} className="safety-card__icon" />
             <div>
-              <h3>How BookLoop Works Safely</h3>
-              <p>Simple 3-step student model designed for campus peace of mind.</p>
+              <h3>How BookLoop Works</h3>
+              <p>Knowledge transfer, paper sustainability, and fair campus exchange.</p>
             </div>
           </div>
           <div className="safety-steps-grid">
             <div className="safety-step">
               <span className="safety-step__number">1</span>
-              <h4>Send Interest</h4>
-              <p>Find the book you need and submit an interest request to the seller.</p>
+              <h4>Knowledge Continuity</h4>
+              <p>Books carry permanent wisdom. Once your exams or semester conclude, pass that learning forward to juniors.</p>
             </div>
             <div className="safety-step">
               <span className="safety-step__number">2</span>
-              <h4>Seller Accepts</h4>
-              <p>Seller accepts your request. Only then is their WhatsApp contact revealed.</p>
+              <h4>Save Paper & Trees</h4>
+              <p>Reusing textbooks preserves paper and natural resources while making higher education genuinely affordable.</p>
             </div>
             <div className="safety-step">
               <span className="safety-step__number">3</span>
-              <h4>Campus Meetup</h4>
-              <p>Meet in daylight at a campus library, canteen, or gate to inspect and exchange.</p>
+              <h4>Fair Campus Exchange</h4>
+              <p>Zero middlemen fees. Seniors recover academic costs fairly and hand over books securely on campus.</p>
             </div>
           </div>
         </Card>
