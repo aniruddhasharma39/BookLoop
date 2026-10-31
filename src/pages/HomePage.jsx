@@ -115,16 +115,10 @@ export default function HomePage() {
         </form>
 
         <div className="hero-actions">
-          <Link to="/listings/new">
-            <Button variant="accent" size="lg" className="hero-cta-btn">
-              <PlusCircle size={20} />
-              <span>Sell a Book</span>
-            </Button>
-          </Link>
           <Link to="/search">
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="md">
               Browse All Listings
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </Button>
           </Link>
         </div>
@@ -253,6 +247,23 @@ export default function HomePage() {
             onAction={() => navigate('/listings/new')}
           />
         )}
+      </section>
+
+      {/* Seller Callout Banner */}
+      <section className="seller-callout-section">
+        <div className="seller-callout-card">
+          <div className="seller-callout-content">
+            <span className="seller-callout-badge">For Seniors & Graduating Students</span>
+            <h3 className="seller-callout-title">Have textbooks collecting dust on your shelf?</h3>
+            <p className="seller-callout-desc">
+              Pass them on to juniors at your college, earn pocket money back, and keep textbook costs affordable for your campus.
+            </p>
+          </div>
+          <Link to="/listings/new" className="seller-callout-cta">
+            <PlusCircle size={20} />
+            <span>List a Book in 60s</span>
+          </Link>
+        </div>
       </section>
 
       {/* Trust & Safety Campus Info Banner */}
