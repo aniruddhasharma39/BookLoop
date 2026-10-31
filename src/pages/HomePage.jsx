@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, ShieldCheck, MapPin, Users, BookOpen, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Search, ArrowRight, ShieldCheck, MapPin, Users, BookOpen, RefreshCw, AlertTriangle, BookPlus, Send, MessageCircle } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Chip from '../components/common/Chip';
@@ -90,13 +90,13 @@ export default function HomePage() {
       <section className="hero-section">
         <div className="hero-badge">
           <ShieldCheck size={15} />
-          <span>Campus Knowledge Exchange • Sustainable & Fair</span>
+          <span>Student-to-Student Campus Marketplace</span>
         </div>
         <h1 className="hero-title">
           Find a book. <span className="hero-title__highlight">Pass it on.</span>
         </h1>
         <p className="hero-subtitle">
-          Textbooks enlighten our academic journey. Once your course is complete, pass that knowledge on to juniors — keep education affordable, save paper, and recover your costs fairly.
+          Buy and sell used textbooks directly with students on your campus. Safe meetups, zero middlemen fees, and instant WhatsApp handover.
         </p>
 
         {/* Unified Elevated Capsule Search Bar */}
@@ -111,6 +111,8 @@ export default function HomePage() {
             placeholder="Search by book title, author, subject, or college..."
             aria-label="Search textbooks"
             className="hero-search-input"
+            autoComplete="off"
+            spellCheck="false"
           />
           <button type="submit" className="hero-search-btn">
             <span>Find Books</span>
@@ -252,31 +254,71 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Knowledge Continuity & Campus Value Banner */}
-      <section className="campus-safety-banner">
-        <Card className="safety-card">
-          <div className="safety-card__header">
-            <Users size={24} className="safety-card__icon" />
-            <div>
-              <h3>How BookLoop Works</h3>
-              <p>Knowledge transfer, paper sustainability, and fair campus exchange.</p>
+      {/* How BookLoop Works Step-by-Step */}
+      <section className="how-it-works-section">
+        <Card className="how-it-works-card">
+          <div className="how-it-works-header">
+            <div className="how-it-works-badge">
+              <Users size={16} />
+              <span>Campus Peer Exchange</span>
             </div>
+            <h2 className="how-it-works-title">How BookLoop Works</h2>
+            <p className="how-it-works-subtitle">
+              Buy and sell textbooks directly on your campus in 3 simple steps.
+            </p>
           </div>
-          <div className="safety-steps-grid">
-            <div className="safety-step">
-              <span className="safety-step__number">1</span>
-              <h4>Knowledge Continuity</h4>
-              <p>Books carry permanent wisdom. Once your exams or semester conclude, pass that learning forward to juniors.</p>
+
+          <div className="steps-flow-container">
+            {/* Step 1 */}
+            <div className="step-card">
+              <div className="step-card__top">
+                <span className="step-number">1</span>
+                <div className="step-icon">
+                  <BookPlus size={22} />
+                </div>
+              </div>
+              <h3 className="step-title">Seller Lists a Book</h3>
+              <p className="step-desc">
+                The seller uploads the textbook title, condition, and fair campus price in under 60 seconds.
+              </p>
             </div>
-            <div className="safety-step">
-              <span className="safety-step__number">2</span>
-              <h4>Save Paper & Trees</h4>
-              <p>Reusing textbooks preserves paper and natural resources while making higher education genuinely affordable.</p>
+
+            {/* Arrow Connector 1 */}
+            <div className="step-connector" aria-hidden="true">
+              <ArrowRight size={24} className="step-arrow-icon" />
             </div>
-            <div className="safety-step">
-              <span className="safety-step__number">3</span>
-              <h4>Fair Campus Exchange</h4>
-              <p>Zero middlemen fees. Seniors recover academic costs fairly and hand over books securely on campus.</p>
+
+            {/* Step 2 */}
+            <div className="step-card">
+              <div className="step-card__top">
+                <span className="step-number">2</span>
+                <div className="step-icon">
+                  <Send size={22} />
+                </div>
+              </div>
+              <h3 className="step-title">Buyer Sends Interest</h3>
+              <p className="step-desc">
+                A buyer finds the textbook and sends an interest request with an optional handover note.
+              </p>
+            </div>
+
+            {/* Arrow Connector 2 */}
+            <div className="step-connector" aria-hidden="true">
+              <ArrowRight size={24} className="step-arrow-icon" />
+            </div>
+
+            {/* Step 3 */}
+            <div className="step-card">
+              <div className="step-card__top">
+                <span className="step-number">3</span>
+                <div className="step-icon">
+                  <MessageCircle size={22} />
+                </div>
+              </div>
+              <h3 className="step-title">Seller Accepts & WhatsApp</h3>
+              <p className="step-desc">
+                Once the seller accepts, WhatsApp numbers unlock to coordinate an easy on-campus meetup.
+              </p>
             </div>
           </div>
         </Card>

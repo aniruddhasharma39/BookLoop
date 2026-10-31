@@ -173,32 +173,40 @@ export default function SearchPage() {
         <p className="search-page-subtitle">Search across title, author, course, exam, and campus</p>
       </div>
 
-      {/* Level Quick Filter Chips */}
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+      {/* Category Quick Filter Chips (Consistent with Home Page) */}
+      <div className="search-categories-scroll" role="region" aria-label="Book categories">
         <Chip
-          label="All Levels"
-          selected={selectedInstitutionType === ''}
+          label="All Categories"
+          selected={!selectedCategory}
           onClick={() => {
-            setSelectedInstitutionType('');
-            setSelectedInstitution('');
+            setSelectedCategory('');
+            setSearchParams((prev) => {
+              const newParams = new URLSearchParams(prev);
+              newParams.delete('category');
+              return newParams;
+            });
           }}
         />
-        <Chip
-          label="Schools & 1st-12th"
-          selected={selectedInstitutionType === 'School'}
-          onClick={() => {
-            setSelectedInstitutionType(selectedInstitutionType === 'School' ? '' : 'School');
-            setSelectedInstitution('');
-          }}
-        />
-        <Chip
-          label="Colleges & Universities"
-          selected={selectedInstitutionType === 'College'}
-          onClick={() => {
-            setSelectedInstitutionType(selectedInstitutionType === 'College' ? '' : 'College');
-            setSelectedInstitution('');
-          }}
-        />
+        {BOOK_CATEGORIES.map((cat) => (
+          <Chip
+            key={cat}
+            label={cat}
+            selected={selectedCategory === cat}
+            onClick={() => {
+              const nextCat = selectedCategory === cat ? '' : cat;
+              setSelectedCategory(nextCat);
+              setSearchParams((prev) => {
+                const newParams = new URLSearchParams(prev);
+                if (nextCat) {
+                  newParams.set('category', nextCat);
+                } else {
+                  newParams.delete('category');
+                }
+                return newParams;
+              });
+            }}
+          />
+        ))}
       </div>
 
       {/* Main Search & Quick Controls */}
