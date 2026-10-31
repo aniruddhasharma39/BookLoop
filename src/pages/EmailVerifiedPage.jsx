@@ -21,13 +21,15 @@ export default function EmailVerifiedPage() {
       }
 
       try {
-        // Check for error in hash or search query params (e.g. token expired)
-        const hash = window.location.hash || '';
+        // Parse search params and hash fragments
         const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        const searchParams = new URLSearchParams(search);
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
 
+        // Check for error in hash or search query params (e.g. token expired)
         if (hash.includes('error=') || search.includes('error=')) {
-          const params = new URLSearchParams(hash.replace(/^#/, '') || search.replace(/^\?/, ''));
-          const desc = params.get('error_description') || 'This verification link has expired or has already been used.';
+          const desc = hashParams.get('error_description') || searchParams.get('error_description') || 'This verification link has expired or has already been used.';
           if (isMounted) {
             setErrorMessage(decodeURIComponent(desc.replace(/\+/g, ' ')));
             setStatus('error');
@@ -35,8 +37,34 @@ export default function EmailVerifiedPage() {
           return;
         }
 
-        // Allow Supabase SDK a brief moment to process hash tokens / code exchange
-        const { data: { session } } = await supabase.auth.getSession();
+        const token_hash = searchParams.get('token_hash') || hashParams.get('token_hash') || searchParams.get('token');
+        const type = searchParams.get('type') || hashParams.get('type') || 'signup';
+        const code = searchParams.get('code');
+
+        // Case 1: Custom flow with token_hash (Shields Supabase URL completely)
+        if (token_hash) {
+          const { error: otpError } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: type,
+          });
+
+          if (otpError) {
+            // If already verified, allow proceed to login
+            const errMsg = (otpError.message || '').toLowerCase();
+            if (errMsg.includes('already confirmed') || errMsg.includes('already verified')) {
+              // Treated as success
+            } else {
+              throw otpError;
+            }
+          }
+        } else if (code) {
+          // Case 2: PKCE code flow
+          const { error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (codeError) throw codeError;
+        } else {
+          // Case 3: Implicit hash flow
+          await supabase.auth.getSession();
+        }
 
         // Sign out immediately so that the user is NOT auto-logged in
         // As per requirements: they must see the green tick success screen, then log in manually
@@ -53,8 +81,14 @@ export default function EmailVerifiedPage() {
       } catch (err) {
         console.error('Verification error:', err);
         if (isMounted) {
-          // Even on minor network glitch, if they reached here from a valid email link, treat as success
-          setStatus('success');
+          const msg = err.message || '';
+          if (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('invalid')) {
+            setErrorMessage('This verification link has expired or has already been used. If you have already verified, please proceed to sign in.');
+            setStatus('error');
+          } else {
+            // Minor glitch or already confirmed
+            setStatus('success');
+          }
         }
       }
     }

@@ -80,3 +80,25 @@ img {
 .grid { display: grid; }
 .w-full { width: 100%; }
 
+/* ==============================================================================
+   Netlify Badge / Feedback Drawer Suppression
+   Completely hides and disables Netlify's "Powered by Netlify" pill / drawer
+   so it never obscures mobile navigation or user controls.
+   ============================================================================== */
+#netlify-feedback-badge,
+[data-netlify-deploy-preview],
+.netlify-badge,
+netlify-drawer,
+netlify-drawer-root,
+div[class*="netlify-feedback"],
+div[class*="netlify-badge"],
+iframe[src*="netlify"],
+div:has(> iframe[title*="Netlify"]),
+div:has(> a[href*="netlify.com"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+}
+

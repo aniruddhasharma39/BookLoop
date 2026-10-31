@@ -11,6 +11,37 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>BookLoop — Find a book. Pass it on.</title>
     <meta name="description" content="Student-to-student second-hand textbook marketplace for nearby colleges and schools." />
+    <script>
+      // Suppress any Netlify deploy preview or "Powered by Netlify" floating badges
+      (function() {
+        function removeNetlifyBadges() {
+          const selectors = [
+            '#netlify-feedback-badge',
+            '[data-netlify-deploy-preview]',
+            '.netlify-badge',
+            'netlify-drawer',
+            'netlify-drawer-root',
+            'iframe[src*="netlify"]'
+          ];
+          selectors.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) { el.remove(); });
+          });
+          document.querySelectorAll('div, a, button').forEach(function(el) {
+            if (el.textContent && el.textContent.trim().toLowerCase() === 'powered by netlify') {
+              el.remove();
+            }
+          });
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', removeNetlifyBadges);
+        } else {
+          removeNetlifyBadges();
+        }
+        var obs = new MutationObserver(removeNetlifyBadges);
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+        setTimeout(function() { obs.disconnect(); }, 12000);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

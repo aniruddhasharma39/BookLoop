@@ -146,6 +146,8 @@
 .navbar__login-link {
   font-weight: 600;
   color: var(--color-primary-navy);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Bold CTA button inspired by GammaStack / Swiggy */
@@ -205,6 +207,104 @@
 @media (min-width: 768px) {
   .navbar__desktop-nav {
     display: flex;
+  }
+}
+
+/* ==============================================================================
+   Mobile Header Layout (< 640px)
+   Guarantees brand and auth/action buttons stay on a single line without wrapping
+   ============================================================================== */
+@media (max-width: 640px) {
+  .navbar__container {
+    padding: 0 12px;
+    min-height: 58px;
+  }
+
+  .navbar__brand {
+    gap: 8px;
+  }
+
+  .navbar__logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .navbar__logo-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .navbar__title {
+    font-size: 1.18rem;
+    letter-spacing: -0.02em;
+  }
+
+  .navbar__tagline {
+    display: none; /* Hide tagline on mobile to keep entire header on a single row */
+  }
+
+  .navbar__right-section {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .navbar__actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .navbar__auth-buttons {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .navbar__login-link {
+    font-size: 0.84rem;
+    padding: 6px 6px;
+    white-space: nowrap !important;
+  }
+
+  .navbar__cta-btn {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    gap: 4px;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .navbar__container {
+    padding: 0 8px;
+  }
+
+  .navbar__brand {
+    gap: 6px;
+  }
+
+  .navbar__logo-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .navbar__logo-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .navbar__title {
+    font-size: 1.05rem;
+  }
+
+  .navbar__login-link {
+    font-size: 0.8rem;
+    padding: 4px 4px;
+  }
+
+  .navbar__cta-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
   }
 }
 
