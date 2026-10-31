@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/';
+  const isVerifiedRedirect = searchParams.get('verified') === 'true';
   const { signIn, isConfigured } = useAuth();
   const navigate = useNavigate();
 
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showVerifiedSuccess, setShowVerifiedSuccess] = useState(isVerifiedRedirect);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -69,6 +71,14 @@ export default function LoginPage() {
           Sign in to manage your textbook listings and requests
         </p>
       </div>
+
+      {showVerifiedSuccess && (
+        <div style={{ marginBottom: 'var(--space-4)' }}>
+          <Alert variant="success" onClose={() => setShowVerifiedSuccess(false)}>
+            Email verified successfully! Please enter your password to sign in.
+          </Alert>
+        </div>
+      )}
 
       {errorMessage && (
         <div style={{ marginBottom: 'var(--space-4)' }}>

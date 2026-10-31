@@ -47,6 +47,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Fetch active institutions from Supabase
   useEffect(() => {
@@ -103,6 +104,10 @@ export default function SignupPage() {
     }
     if (password.length < 6) {
       setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+    if (!termsAccepted) {
+      setErrorMessage('You must confirm and agree to the Terms of Service, Privacy Notice, and Campus Rules.');
       return;
     }
 
@@ -313,26 +318,55 @@ export default function SignupPage() {
 
           <div style={{
             fontSize: 'var(--font-size-xs)',
-            color: 'var(--color-text-muted)',
-            lineHeight: 1.5,
-            backgroundColor: 'var(--color-soft-blue)',
-            padding: 'var(--space-3)',
-            borderRadius: 'var(--radius-sm)',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            padding: 'var(--space-4)',
+            borderRadius: 'var(--radius-md)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '6px',
+            gap: 'var(--space-3)',
           }}>
-            <div>
-              <strong>Student Privacy Guarantee:</strong> We never collect home addresses, government IDs, or live location. Your phone number is strictly encrypted and only shared with a buyer after you accept their request.
-            </div>
-            <div>
-              By creating an account, you agree to our{' '}
-              <Link to="/terms" target="_blank" style={{ fontWeight: 600, textDecoration: 'underline' }}>Terms of Service</Link>,{' '}
-              <Link to="/privacy" target="_blank" style={{ fontWeight: 600, textDecoration: 'underline' }}>Privacy Notice</Link>, and{' '}
-              <Link to="/rules" target="_blank" style={{ fontWeight: 600, textDecoration: 'underline' }}>Campus Meetup Rules</Link>.
-            </div>
-            <div style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>
-              Note for students under 18: Please obtain verifiable consent from a parent or legal guardian before creating an account.
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                id="signup-terms-checkbox"
+                required
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  accentColor: 'var(--color-primary-navy)',
+                  marginTop: '2px',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ color: 'var(--color-text-main)', lineHeight: 1.5, fontSize: '0.85rem' }}>
+                I confirm that I have read and agree to the{' '}
+                <Link to="/terms" target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--color-primary-navy)', textDecoration: 'underline' }}>
+                  Terms of Service
+                </Link>
+                ,{' '}
+                <Link to="/privacy" target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--color-primary-navy)', textDecoration: 'underline' }}>
+                  Privacy Notice
+                </Link>
+                , and{' '}
+                <Link to="/rules" target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--color-primary-navy)', textDecoration: 'underline' }}>
+                  Campus Meetup Rules
+                </Link>
+                .
+              </span>
+            </label>
+
+            <div style={{
+              fontSize: '0.78rem',
+              color: 'var(--color-text-muted)',
+              lineHeight: 1.45,
+              borderTop: '1px solid #E2E8F0',
+              paddingTop: 'var(--space-2)',
+            }}>
+              <strong>Student Privacy Notice:</strong> We never publicly expose phone numbers or personal details. Handover contacts unlock only when a request is accepted. Students under 18 must have parental or legal guardian consent.
             </div>
           </div>
 

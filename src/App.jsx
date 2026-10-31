@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import EmailVerifiedPage from './pages/EmailVerifiedPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
@@ -32,6 +33,9 @@ export default function App() {
             <Route path="listings/:id" element={<ListingDetailPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
+            <Route path="verified" element={<EmailVerifiedPage />} />
+            <Route path="auth/verified" element={<EmailVerifiedPage />} />
+            <Route path="auth/callback" element={<EmailVerifiedPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="terms" element={<TermsPage />} />
             <Route path="rules" element={<SafetyRulesPage />} />

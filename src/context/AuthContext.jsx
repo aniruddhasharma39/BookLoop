@@ -181,6 +181,22 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       const authUser = newSession?.user;
 
+      // If user arrives via email verification link (/verified or /auth/*), do NOT auto-login
+      const isVerificationFlow = typeof window !== 'undefined' && 
+        (window.location.pathname.includes('verified') || window.location.pathname.includes('/auth/'));
+
+      if (isVerificationFlow) {
+        if (event === 'SIGNED_IN') {
+          await supabase.auth.signOut();
+        }
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
       if (authUser && !isUserVerified(authUser)) {
         // Unverified user detected, force sign out to block any unverified state
         await supabase.auth.signOut();
@@ -216,10 +232,15 @@ export function AuthProvider({ children }) {
       throw new Error('Supabase is not configured. Please add your credentials to .env.local');
     }
 
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/verified`
+      : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           display_name: displayName,
           institution_id: institutionId || null,
