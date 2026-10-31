@@ -625,10 +625,10 @@ export default function AdminPage() {
                             rep.status === 'open'
                               ? 'error'
                               : rep.status === 'reviewing'
-                              ? 'warning'
-                              : rep.status === 'resolved'
-                              ? 'success'
-                              : 'default'
+                                ? 'warning'
+                                : rep.status === 'resolved'
+                                  ? 'success'
+                                  : 'default'
                           }
                           size="sm"
                         >
@@ -1000,8 +1000,8 @@ export default function AdminPage() {
           modModal.type === 'hide_listing'
             ? 'Hide / Remove Listing'
             : modModal.type === 'suspend_user'
-            ? 'Suspend Student Account'
-            : 'Reactivate Student Account'
+              ? 'Suspend Student Account'
+              : 'Reactivate Student Account'
         }
         footer={
           <>
