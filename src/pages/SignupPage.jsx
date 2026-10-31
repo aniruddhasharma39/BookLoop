@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, BookMarked, CheckCircle, GraduationCap, School, Mail } from 'lucide-react';
+import { UserPlus, BookMarked, CheckCircle, GraduationCap, School, Mail, Eye, EyeOff } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Input from '../components/common/Input';
@@ -39,6 +39,7 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [institutionType, setInstitutionType] = useState('College'); // 'School' | 'College' | 'Other'
   const [institutionId, setInstitutionId] = useState('');
   const [courseOrClass, setCourseOrClass] = useState('');
@@ -308,12 +309,33 @@ export default function SignupPage() {
 
           <Input
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             required
             autoComplete="new-password"
             placeholder="At least 6 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            suffix={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: showPassword ? 'var(--color-primary-navy)' : '#94A3B8',
+                  transition: 'color 0.15s ease',
+                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
 
           <div style={{
