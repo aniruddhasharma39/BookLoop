@@ -212,9 +212,7 @@ export default function ProfilePage() {
     setStatusMessage({ type: '', text: '' });
 
     try {
-      // Users can only update allowed fields:
-      // display_name, institution_id, course_or_class, graduation_year, whatsapp_number
-      // (Database RLS forbids updating account_status or whatsapp_verified_at)
+      // 1. Update public profile fields
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -222,11 +220,26 @@ export default function ProfilePage() {
           institution_id: institutionId || null,
           course_or_class: course.trim() || null,
           graduation_year: gradYear ? parseInt(gradYear, 10) : null,
-          whatsapp_number: formattedWhatsapp,
+          whatsapp_number: formattedWhatsapp, // trigger redirects this to user_contacts & clears profiles column
         })
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // 2. Explicitly ensure user_contacts is updated
+      if (formattedWhatsapp) {
+        try {
+          await supabase
+            .from('user_contacts')
+            .upsert({
+              user_id: user.id,
+              whatsapp_number: formattedWhatsapp,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' });
+        } catch (contactErr) {
+          // If trigger already handled it or migration in progress
+        }
+      }
 
       await refreshProfile();
       if (formattedWhatsapp) setWhatsapp(formattedWhatsapp);

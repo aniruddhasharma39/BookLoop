@@ -50,8 +50,28 @@ export function AuthProvider({ children }) {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError.message);
+      } else if (profileData) {
+        // Fetch private contact info (whatsapp_number) from user_contacts table
+        let whatsappNum = profileData.whatsapp_number || null;
+        try {
+          const { data: contactData } = await supabase
+            .from('user_contacts')
+            .select('whatsapp_number')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (contactData?.whatsapp_number) {
+            whatsappNum = contactData.whatsapp_number;
+          }
+        } catch (contactErr) {
+          // Fallback gracefully if migration is pending
+        }
+
+        setProfile({
+          ...profileData,
+          whatsapp_number: whatsappNum,
+        });
       } else {
-        setProfile(profileData);
+        setProfile(null);
       }
 
       // 2. Check admin role

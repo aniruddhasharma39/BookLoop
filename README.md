@@ -69,9 +69,14 @@ To initialize your Supabase database:
    - Sets up initial constraints, indexes, and triggers.
 3. Run **`supabase/migrations/20261030000001_security_and_rls_lockdown.sql`**:
    - Enforces strict Row Level Security (RLS) policies.
-   - Creates the `public_catalogue` view for sanitized public reading.
    - Installs controlled stored procedures: `accept_interest_request`, `revoke_interest_request_acceptance`, `decline_interest_request`, `cancel_interest_request`, `mark_listing_sold`, `get_seller_contact`, `admin_suspend_user`, `admin_reactivate_user`, `admin_hide_listing`, and `admin_update_report_status`.
-4. Run **`supabase/seed.sql`**:
+4. Run **`supabase/migrations/20261030000003_security_remediation_and_hardening.sql`**:
+   - Disallows direct buyer request acceptance; enforces RPC execution.
+   - Moves WhatsApp phone numbers to private `public.user_contacts` with owner-only RLS (`auth.uid() = user_id`).
+   - Rebuilds `public_catalogue` `WITH (security_invoker = true)` eliminating Supabase Security Definer View warning.
+   - Prevents sellers from reactivating admin-removed listings via RLS & database trigger.
+   - Creates `public.schema_migrations_tracker` for audit tracking.
+5. Run **`supabase/seed.sql`**:
    - Seeds Pune institutions (COEP Tech, Fergusson College, PICT, VIT, Bishop's School, BMCC, Allen Pune, etc.).
    - Seeds pilot book listings with realistic Indian Rupee prices (stored as paise).
 
@@ -103,16 +108,26 @@ Once executed, sign in and navigate to `/admin` to access the Safety & Moderatio
 
 ## 🧪 Running Security & RLS Tests
 
-Automated RLS test assertions are provided in `supabase/tests/rls_security_tests.sql`.
+Automated RLS test assertions are provided in `supabase/tests/rls_security_tests.sql`, covering 12 test assertions inside an isolated transaction that automatically rolls back (safe for live databases).
 
 To run the verification suite:
 1. Open **Supabase Dashboard** > **SQL Editor**.
 2. Paste and run the contents of `supabase/tests/rls_security_tests.sql`.
 3. The script verifies:
-   - Anonymous readers can query active books via `public_catalogue` without exposing phone numbers.
-   - Non-accepted buyers cannot query seller WhatsApp contact.
-   - Users cannot edit listings owned by other students.
-   - Non-admins cannot invoke moderation RPCs or access `admin_audit_logs`.
+   - **Test 1:** `public_catalogue` view never exposes private contact fields.
+   - **Test 2:** Non-owners cannot update other students' listings.
+   - **Test 3:** Strangers cannot view private interest requests of other students.
+   - **Test 4:** Non-admins cannot write to `admin_roles`.
+   - **Test 5:** Seller WhatsApp number cannot be revealed while request is pending.
+   - **Test 6:** Seller WhatsApp is accessible only by the accepted buyer.
+   - **Test 7:** Marking a listing as sold automatically closes remaining pending requests.
+   - **Test 8:** Suspended accounts are blocked from creating listings; actions logged to `admin_audit_logs`.
+   - **Test 9:** Buyers cannot accept their own interest request directly.
+   - **Test 10:** Stranger / buyer cannot query seller's WhatsApp number from `profiles` or `user_contacts`.
+   - **Test 11:** Seller cannot reactivate an admin-removed listing.
+   - **Test 12:** `schema_migrations_tracker` actively monitors applied migrations.
+
+For operational procedures and two-account manual walkthroughs, refer to [`docs/OPERATIONAL_GUIDE.md`](./docs/OPERATIONAL_GUIDE.md).
 
 ---
 

@@ -231,27 +231,7 @@ export default function RequestsPage() {
       });
 
       if (error) {
-        if (error.message?.includes('schema cache') || error.code === 'PGRST202') {
-          // RPC not yet updated in Supabase SQL editor; perform sequential table update
-          if (previousAcceptedId) {
-            await supabase
-              .from('interest_requests')
-              .update({ status: 'pending', responded_at: null })
-              .eq('id', previousAcceptedId);
-          }
-
-          const { error: fallbackErr } = await supabase
-            .from('interest_requests')
-            .update({
-              status: 'accepted',
-              responded_at: new Date().toISOString(),
-            })
-            .eq('id', requestId);
-
-          if (fallbackErr) throw fallbackErr;
-        } else {
-          throw error;
-        }
+        throw error;
       }
 
       setFeedback({
@@ -292,16 +272,7 @@ export default function RequestsPage() {
       });
 
       if (error) {
-        if (error.message?.includes('schema cache') || error.code === 'PGRST202') {
-          const { error: fallbackErr } = await supabase
-            .from('interest_requests')
-            .update({ status: 'pending', responded_at: null })
-            .eq('id', requestId);
-
-          if (fallbackErr) throw fallbackErr;
-        } else {
-          throw error;
-        }
+        throw error;
       }
 
       setFeedback({
@@ -317,7 +288,7 @@ export default function RequestsPage() {
     }
   };
 
-  // Seller declines request via secure RPC (with graceful fallback)
+  // Seller declines request via secure RPC
   const handleDeclineRequest = async (requestId) => {
     setActionLoading((prev) => ({ ...prev, [requestId]: true }));
     setFeedback({ type: '', message: '' });
@@ -328,19 +299,7 @@ export default function RequestsPage() {
       });
 
       if (error) {
-        if (error.message?.includes('schema cache') || error.code === 'PGRST202') {
-          const { error: fallbackErr } = await supabase
-            .from('interest_requests')
-            .update({
-              status: 'declined',
-              responded_at: new Date().toISOString(),
-            })
-            .eq('id', requestId);
-
-          if (fallbackErr) throw fallbackErr;
-        } else {
-          throw error;
-        }
+        throw error;
       }
 
       setFeedback({ type: 'info', message: 'Interest request declined.' });
@@ -364,32 +323,6 @@ export default function RequestsPage() {
       });
 
       if (error) {
-        if (error.message?.includes('schema cache') || error.code === 'PGRST202') {
-          // Direct fallback if function was not installed in DB yet
-          const { data: reqData, error: reqErr } = await supabase
-            .from('interest_requests')
-            .select(`
-              id,
-              status,
-              listings (title),
-              profiles!interest_requests_seller_id_fkey (display_name, whatsapp_number)
-            `)
-            .eq('id', requestId)
-            .single();
-
-          if (reqErr) throw reqErr;
-          if (reqData && reqData.status === 'accepted') {
-            setSellerContacts((prev) => ({
-              ...prev,
-              [requestId]: {
-                whatsapp: reqData.profiles?.whatsapp_number,
-                sellerName: reqData.profiles?.display_name,
-                bookTitle: reqData.listings?.title,
-              },
-            }));
-            return;
-          }
-        }
         throw error;
       }
 

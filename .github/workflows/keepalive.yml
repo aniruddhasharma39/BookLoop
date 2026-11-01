@@ -1,0 +1,28 @@
+name: Supabase Database Keepalive
+
+on:
+  schedule:
+    # Run every Monday and Thursday at 06:00 UTC (twice a week to prevent 7-day free tier pause)
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST Endpoint
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://ofaybxxfymkzceydqfia.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_0IneGvWbql6WQB0ZUhYwKw_Aea0VIAj' }}
+        run: |
+          echo "Sending keepalive query to Supabase PostgREST..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/institutions?select=id&limit=1")
+          echo "HTTP response status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "Supabase database is active and responding."
+          else
+            echo "Warning: Unexpected response status: $STATUS"
+          fi

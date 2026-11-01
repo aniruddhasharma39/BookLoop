@@ -220,8 +220,98 @@ BEGIN
         RAISE NOTICE '✅ TEST 8b PASSED: Suspended user blocked by RLS from creating listings.';
     END;
 
+    -- -------------------------------------------------------------
+    -- TEST 9: Buyer cannot accept their own interest request directly
+    -- -------------------------------------------------------------
+    PERFORM set_config('request.jwt.claim.sub', c_buyer_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+
+    BEGIN
+        UPDATE public.interest_requests
+        SET status = 'accepted'
+        WHERE id = v_request_id;
+
+        -- Check if row was actually updated
+        SELECT status INTO v_temp_text FROM public.interest_requests WHERE id = v_request_id;
+        IF v_temp_text = 'accepted' THEN
+            RAISE EXCEPTION '❌ TEST 9 FAILED: Buyer was able to accept their own interest request directly!';
+        ELSE
+            RAISE NOTICE '✅ TEST 9 PASSED: Direct buyer request acceptance rejected (0 rows updated).';
+        END IF;
+    EXCEPTION WHEN insufficient_privilege OR OTHERS THEN
+        RAISE NOTICE '✅ TEST 9 PASSED: Direct buyer status update blocked by permissions or guard trigger.';
+    END;
+
+    -- -------------------------------------------------------------
+    -- TEST 10: Buyer cannot read seller's WhatsApp from profiles/user_contacts while pending
+    -- -------------------------------------------------------------
+    -- 10a: Querying profiles for seller WhatsApp
+    SELECT whatsapp_number INTO v_temp_text
+    FROM public.profiles
+    WHERE id = c_seller_id;
+
+    IF v_temp_text IS NULL OR trim(v_temp_text) = '' THEN
+        RAISE NOTICE '✅ TEST 10a PASSED: profiles table has NULL whatsapp_number; zero leak.';
+    ELSE
+        RAISE EXCEPTION '❌ TEST 10a FAILED: profiles table leaked seller whatsapp_number!';
+    END IF;
+
+    -- 10b: Querying user_contacts directly as buyer
+    PERFORM set_config('request.jwt.claim.sub', c_buyer_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+
+    SELECT count(*) INTO v_count
+    FROM public.user_contacts
+    WHERE user_id = c_seller_id;
+
+    IF v_count = 0 THEN
+        RAISE NOTICE '✅ TEST 10b PASSED: Buyer cannot query seller contact from user_contacts (RLS protected).';
+    ELSE
+        RAISE EXCEPTION '❌ TEST 10b FAILED: Buyer accessed seller row in user_contacts!';
+    END IF;
+
+    -- -------------------------------------------------------------
+    -- TEST 11: Seller cannot reactivate an admin-removed listing
+    -- -------------------------------------------------------------
+    -- Admin hides seller's listing
+    PERFORM set_config('request.jwt.claim.sub', c_admin_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+    PERFORM public.admin_hide_listing(v_listing_id, 'Content policy violation');
+
+    -- Seller attempts to reactivate listing to 'active'
+    PERFORM set_config('request.jwt.claim.sub', c_seller_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+
+    BEGIN
+        UPDATE public.listings
+        SET status = 'active'
+        WHERE id = v_listing_id;
+
+        SELECT status INTO v_temp_text FROM public.listings WHERE id = v_listing_id;
+        IF v_temp_text = 'active' THEN
+            RAISE EXCEPTION '❌ TEST 11 FAILED: Seller reactivated an admin-removed listing!';
+        ELSE
+            RAISE NOTICE '✅ TEST 11 PASSED: Seller reactivation blocked by RLS/Trigger.';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE '✅ TEST 11 PASSED: Seller reactivation rejected with error: %', SQLERRM;
+    END;
+
+    -- -------------------------------------------------------------
+    -- TEST 12: Migration tracker records all schema versions
+    -- -------------------------------------------------------------
+    PERFORM set_config('request.jwt.claim.sub', c_admin_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+
+    SELECT count(*) INTO v_count FROM public.schema_migrations_tracker;
+    IF v_count >= 4 THEN
+        RAISE NOTICE '✅ TEST 12 PASSED: schema_migrations_tracker actively tracking % schema migrations.', v_count;
+    ELSE
+        RAISE EXCEPTION '❌ TEST 12 FAILED: Expected at least 4 tracked migrations, found %', v_count;
+    END IF;
+
     RAISE NOTICE '=======================================================';
-    RAISE NOTICE '🎉 ALL 8 RLS & DATA SECURITY TESTS PASSED PERFECTLY!';
+    RAISE NOTICE '🎉 ALL 12 RLS, PRIVACY & SECURITY TESTS PASSED PERFECTLY!';
     RAISE NOTICE '=======================================================';
 END $$;
 

@@ -216,14 +216,7 @@ export default function AdminPage() {
       });
 
       if (error) {
-        // Direct fallback if RPC is not yet executed in DB
-        await supabase
-          .from('reports')
-          .update({
-            status: newStatus,
-            resolved_at: newStatus === 'resolved' || newStatus === 'dismissed' ? new Date().toISOString() : null,
-          })
-          .eq('id', reportId);
+        throw error;
       }
 
       setFeedback({ type: 'success', message: `Report marked as ${newStatus}.` });
@@ -251,9 +244,7 @@ export default function AdminPage() {
         });
 
         if (error) {
-          // Direct fallback
-          await supabase.from('listings').update({ status: 'removed' }).eq('id', modModal.targetId);
-          await supabase.from('interest_requests').update({ status: 'closed' }).eq('listing_id', modModal.targetId);
+          throw error;
         }
 
         setFeedback({ type: 'success', message: `Listing "${modModal.targetTitle}" has been removed from marketplace.` });
@@ -264,8 +255,7 @@ export default function AdminPage() {
         });
 
         if (error) {
-          await supabase.from('profiles').update({ account_status: 'suspended' }).eq('id', modModal.targetId);
-          await supabase.from('listings').update({ status: 'removed' }).eq('seller_id', modModal.targetId);
+          throw error;
         }
 
         setFeedback({ type: 'warning', message: `User account "${modModal.targetTitle}" has been suspended.` });
@@ -276,7 +266,7 @@ export default function AdminPage() {
         });
 
         if (error) {
-          await supabase.from('profiles').update({ account_status: 'active' }).eq('id', modModal.targetId);
+          throw error;
         }
 
         setFeedback({ type: 'success', message: `User account "${modModal.targetTitle}" has been reactivated.` });
