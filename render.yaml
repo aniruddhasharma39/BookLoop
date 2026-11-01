@@ -5,6 +5,9 @@ services:
     staticPublishPath: dist
     routes:
       - type: rewrite
+        source: /api/supabase/*
+        destination: https://ofaybxxfymkzceydqfia.supabase.co/*
+      - type: rewrite
         source: /*
         destination: /index.html
     envVars:

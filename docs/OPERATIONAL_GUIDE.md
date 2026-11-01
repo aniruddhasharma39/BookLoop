@@ -139,3 +139,4 @@ A full audit of the Git log across all commits was conducted:
 - No Supabase `service_role` keys or SMTP master keys exist in repository history.
 - `.gitignore` strictly ignores `.env*`, `.local`, and `backups/`.
 - Safe template provided in [`.env.example`](file:///c:/Users/PC/Desktop/Internship/BookLoop/.env.example).
+

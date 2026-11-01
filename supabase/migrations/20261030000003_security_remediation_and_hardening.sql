@@ -392,3 +392,4 @@ GRANT EXECUTE ON FUNCTION public.get_seller_contact(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.accept_interest_request(UUID) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+

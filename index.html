@@ -12,6 +12,12 @@
     <title>BookLoop — Find a book. Pass it on.</title>
     <meta name="description" content="Student-to-student second-hand textbook marketplace for nearby colleges and schools." />
     <script>
+    <script>
+      // Automatically redirect away from invalid multi-level subdomain www.*.vercel.app if reached
+      if (typeof window !== 'undefined' && window.location.hostname.startsWith('www.') && window.location.hostname.endsWith('.vercel.app')) {
+        window.location.replace('https://' + window.location.hostname.replace(/^www\./, '') + window.location.pathname + window.location.search);
+      }
+
       // Suppress any Netlify deploy preview or "Powered by Netlify" floating badges
       (function() {
         function removeNetlifyBadges() {

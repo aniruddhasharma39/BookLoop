@@ -25,3 +25,4 @@ echo "Dumping database to $OUTPUT_FILE..."
 pg_dump --clean --if-exists --no-owner --no-privileges -d "$DB_URL" -f "$OUTPUT_FILE"
 
 echo "Backup created successfully: $OUTPUT_FILE"
+
