@@ -271,32 +271,9 @@ BEFORE UPDATE ON public.listings
 FOR EACH ROW
 EXECUTE FUNCTION public.protect_listing_status();
 
--- Trigger to prevent direct interest request updates
-CREATE OR REPLACE FUNCTION public.guard_interest_request_updates()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Allow trusted internal RPCs and admin operations
-    IF current_setting('bookloop.internal_rpc', true) = 'true' 
-       OR public.is_admin_or_moderator(auth.uid()) THEN
-        NEW.updated_at := timezone('utc'::text, now());
-        RETURN NEW;
-    END IF;
-
-    -- Block direct status tampering
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
-        RAISE EXCEPTION 'Direct interest request status updates are prohibited. Use accept_interest_request, decline_interest_request, or cancel_interest_request.';
-    END IF;
-
-    NEW.updated_at := timezone('utc'::text, now());
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
+-- Clean up any legacy guard trigger on interest_requests
 DROP TRIGGER IF EXISTS trg_guard_interest_request_updates ON public.interest_requests;
-CREATE TRIGGER trg_guard_interest_request_updates
-BEFORE UPDATE ON public.interest_requests
-FOR EACH ROW
-EXECUTE FUNCTION public.guard_interest_request_updates();
+DROP FUNCTION IF EXISTS public.guard_interest_request_updates();
 
 -- ==============================================================================
 -- CONTROLLED STORED PROCEDURES (RPCS)
@@ -315,9 +292,6 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
-
-    -- Set trusted internal RPC flag so trigger allows this transition
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     SELECT seller_id, listing_id, status
     INTO v_seller_id, v_listing_id, v_status
@@ -378,9 +352,6 @@ BEGIN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
-    -- Set trusted internal RPC flag
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
-
     SELECT seller_id, status
     INTO v_seller_id, v_status
     FROM public.interest_requests
@@ -415,9 +386,6 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
-
-    -- Set trusted internal RPC flag
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     SELECT seller_id, status
     INTO v_seller_id, v_status
@@ -454,9 +422,6 @@ BEGIN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
-    -- Set trusted internal RPC flag
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
-
     SELECT buyer_id, status
     INTO v_buyer_id, v_status
     FROM public.interest_requests
@@ -491,9 +456,6 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
-
-    -- Set trusted internal RPC flag
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     SELECT seller_id, status
     INTO v_seller_id, v_status
@@ -618,8 +580,6 @@ BEGIN
     IF NOT public.is_admin_or_moderator(auth.uid()) THEN
         RAISE EXCEPTION 'Unauthorized: Admin privileges required';
     END IF;
-
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     UPDATE public.listings
     SET status = 'removed'
@@ -912,9 +872,13 @@ GRANT EXECUTE ON FUNCTION public.admin_hide_listing(UUID, TEXT) TO authenticated
 GRANT EXECUTE ON FUNCTION public.admin_update_report_status(UUID, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin_or_moderator(UUID) TO anon, authenticated;
 
--- Record migration version
+-- Record migration versions
 INSERT INTO public.schema_migrations_tracker (version, description)
-VALUES ('20261030000003_security_remediation_and_hardening', 'Complete consolidated setup')
+VALUES 
+    ('20261030000000_initial_schema', 'Initial BookLoop schema'),
+    ('20261030000001_security_and_rls_lockdown', 'RLS and security lockdown'),
+    ('20261030000002_admin_and_reports', 'Admin roles and moderation'),
+    ('20261030000003_security_remediation_and_hardening', 'Complete consolidated setup and security hardening')
 ON CONFLICT (version) DO NOTHING;
 
 -- Reload Supabase PostgREST schema cache

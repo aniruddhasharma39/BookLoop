@@ -52,32 +52,12 @@ ON public.interest_requests FOR UPDATE
 USING (public.is_admin_or_moderator(auth.uid()))
 WITH CHECK (public.is_admin_or_moderator(auth.uid()));
 
--- Enforce via trigger: Non-admins cannot alter status directly outside SECURITY DEFINER RPCs
-CREATE OR REPLACE FUNCTION public.guard_interest_request_updates()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Allow trusted internal RPCs and admin operations
-    IF current_setting('bookloop.internal_rpc', true) = 'true' 
-       OR public.is_admin_or_moderator(auth.uid()) THEN
-        NEW.updated_at := timezone('utc'::text, now());
-        RETURN NEW;
-    END IF;
-
-    -- Block direct status tampering by buyers/sellers
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
-        RAISE EXCEPTION 'Direct interest request status updates are prohibited. Use accept_interest_request, decline_interest_request, or cancel_interest_request.';
-    END IF;
-
-    NEW.updated_at := timezone('utc'::text, now());
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
+-- Direct updates on interest_requests are blocked at the engine level:
+-- 1. REVOKE UPDATE ON public.interest_requests FROM anon, authenticated (line 46)
+-- 2. "Admins can update request status" policy restricts UPDATE strictly to admins.
+-- Drop any legacy trigger to avoid syntax or timing conflicts:
 DROP TRIGGER IF EXISTS trg_guard_interest_request_updates ON public.interest_requests;
-CREATE TRIGGER trg_guard_interest_request_updates
-BEFORE UPDATE ON public.interest_requests
-FOR EACH ROW
-EXECUTE FUNCTION public.guard_interest_request_updates();
+DROP FUNCTION IF EXISTS public.guard_interest_request_updates();
 
 -- ------------------------------------------------------------------------------
 -- 3. FIX ISSUE 2: MOVE WHATSAPP CONTACT NUMBERS TO PRIVATE TABLE
@@ -236,9 +216,6 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
-
-    -- Set trusted internal RPC flag so trigger allows this transition
-    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     SELECT seller_id, listing_id, status
     INTO v_seller_id, v_listing_id, v_status
