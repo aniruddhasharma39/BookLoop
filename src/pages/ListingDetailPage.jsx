@@ -11,6 +11,7 @@ import ReportModal from '../components/common/ReportModal';
 import { formatRupees, getListingImageUrl } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchWithCache } from '../lib/cache';
 import './ListingDetailPage.css';
 
 export default function ListingDetailPage() {
@@ -46,29 +47,33 @@ export default function ListingDetailPage() {
 
       try {
         setLoading(true);
-        const { data, error: fetchErr } = await supabase
-          .from('listings')
-          .select(`
-            id,
-            seller_id,
-            title,
-            author,
-            edition,
-            category,
-            course_or_exam,
-            condition,
-            description,
-            price_paise,
-            status,
-            created_at,
-            institutions (name, area, city),
-            profiles (display_name),
-            listing_images (storage_path, display_order)
-          `)
-          .eq('id', id)
-          .maybeSingle();
+        const data = await fetchWithCache(`listings:detail:${id}`, async () => {
+          const { data: fetched, error: fetchErr } = await supabase
+            .from('listings')
+            .select(`
+              id,
+              seller_id,
+              title,
+              author,
+              edition,
+              category,
+              course_or_exam,
+              condition,
+              description,
+              price_paise,
+              status,
+              created_at,
+              institutions (name, area, city),
+              profiles (display_name),
+              listing_images (storage_path, display_order)
+            `)
+            .eq('id', id)
+            .maybeSingle();
 
-        if (fetchErr) throw fetchErr;
+          if (fetchErr) throw fetchErr;
+          return fetched;
+        }, 180000); // 3-minute cache
+
         setBook(data);
 
         // Check if current user already sent an active request for this listing

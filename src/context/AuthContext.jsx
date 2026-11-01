@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getCache, setCache, removeCache } from '../lib/cache';
+import { 
+  checkOtpRateLimit, 
+  recordOtpRequest, 
+  recordOtpVerifyFailure, 
+  isOtpVerifyLocked, 
+  resetOtpVerifyFailures 
+} from '../lib/rateLimit';
 
 const AuthContext = createContext(null);
 
@@ -21,12 +29,22 @@ export function AuthProvider({ children }) {
     return Boolean(authUser && (authUser.email_confirmed_at || authUser.confirmed_at));
   };
 
-  // Fetch user profile and admin role from Supabase
-  const fetchProfileAndRole = useCallback(async (userId) => {
+  // Fetch user profile and admin role from Supabase (with client-side caching)
+  const fetchProfileAndRole = useCallback(async (userId, skipCache = false) => {
     if (!userId || !isSupabaseConfigured) {
       setProfile(null);
       setIsAdmin(false);
       return;
+    }
+
+    const cacheKey = `profile_${userId}`;
+    if (!skipCache) {
+      const cached = getCache(cacheKey);
+      if (cached) {
+        setProfile(cached.profile);
+        setIsAdmin(cached.isAdmin);
+        return;
+      }
     }
 
     try {
@@ -48,6 +66,7 @@ export function AuthProvider({ children }) {
         .eq('id', userId)
         .maybeSingle();
 
+      let finalProfile = null;
       if (profileError) {
         console.error('Error fetching profile:', profileError.message);
       } else if (profileData) {
@@ -66,10 +85,11 @@ export function AuthProvider({ children }) {
           // Fallback gracefully if migration is pending
         }
 
-        setProfile({
+        finalProfile = {
           ...profileData,
           whatsapp_number: whatsappNum,
-        });
+        };
+        setProfile(finalProfile);
       } else {
         setProfile(null);
       }
@@ -81,7 +101,12 @@ export function AuthProvider({ children }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      setIsAdmin(Boolean(adminData && (adminData.role === 'admin' || adminData.role === 'moderator')));
+      const adminFlag = Boolean(adminData && (adminData.role === 'admin' || adminData.role === 'moderator'));
+      setIsAdmin(adminFlag);
+
+      if (finalProfile) {
+        setCache(cacheKey, { profile: finalProfile, isAdmin: adminFlag }, 120000); // 2-min cache
+      }
     } catch (err) {
       console.error('Failed to load user profile or role:', err);
     }
@@ -309,13 +334,107 @@ export function AuthProvider({ children }) {
 
     setUser(data.user);
     setSession(data.session);
-    await fetchProfileAndRole(data.user.id);
+    await fetchProfileAndRole(data.user.id, true);
+    return data;
+  };
+
+  // Request OTP login / recovery (Registered users only, with DoS rate-limiting)
+  const signInWithOtp = async ({ email }) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase is not configured. Please add your credentials to .env.local');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Rate-limit check (anti-abuse, anti-DoS)
+    const rateCheck = checkOtpRateLimit(cleanEmail);
+    if (!rateCheck.allowed) {
+      throw new Error(rateCheck.reason);
+    }
+
+    // 2. Supabase signInWithOtp with shouldCreateUser: false
+    // ensures OTP is sent ONLY to existing registered users
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
+
+    if (error) {
+      const msg = error.message?.toLowerCase() || '';
+      if (msg.includes('signups not allowed') || msg.includes('user not found')) {
+        throw new Error('No registered account found with this email. Please check the address or sign up.');
+      } else if (msg.includes('rate limit')) {
+        throw new Error('Too many requests from this device. Please wait a minute and try again.');
+      }
+      throw error;
+    }
+
+    // Record request timestamp for anti-spam rate limiting
+    recordOtpRequest(cleanEmail);
+    return data;
+  };
+
+  // Verify OTP and establish authenticated session
+  const verifyOtp = async ({ email, token }) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase is not configured. Please add your credentials to .env.local');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanToken = token.trim();
+
+    // Check brute-force lockout
+    if (isOtpVerifyLocked(cleanEmail)) {
+      throw new Error('Too many invalid attempts. For your security, this code has expired. Please request a new OTP.');
+    }
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'email',
+    });
+
+    if (error) {
+      recordOtpVerifyFailure(cleanEmail);
+      if (error.message?.toLowerCase().includes('token has expired') || error.message?.toLowerCase().includes('invalid')) {
+        throw new Error('Incorrect or expired OTP code. Please check your email or request a new code.');
+      }
+      throw error;
+    }
+
+    resetOtpVerifyFailures(cleanEmail);
+
+    if (data?.user) {
+      setUser(data.user);
+      setSession(data.session);
+      await fetchProfileAndRole(data.user.id, true);
+    }
+
+    return data;
+  };
+
+  // Update password (for users logged in via OTP who want to set a new password)
+  const updatePassword = async (newPassword) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) throw error;
     return data;
   };
 
   // Sign out
   const signOut = async () => {
     if (!isSupabaseConfigured) return;
+    if (user?.id) {
+      removeCache(`profile_${user.id}`);
+    }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setUser(null);
@@ -327,7 +446,7 @@ export function AuthProvider({ children }) {
   // Manual refresh of profile (e.g. after updating WhatsApp number or bio)
   const refreshProfile = async () => {
     if (user?.id) {
-      await fetchProfileAndRole(user.id);
+      await fetchProfileAndRole(user.id, true);
     }
   };
 
@@ -343,6 +462,9 @@ export function AuthProvider({ children }) {
     markRequestsAsSeen,
     signUp,
     signIn,
+    signInWithOtp,
+    verifyOtp,
+    updatePassword,
     signOut,
     refreshProfile,
     isConfigured: isSupabaseConfigured,

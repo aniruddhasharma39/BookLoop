@@ -30,9 +30,11 @@ import Alert from '../components/common/Alert';
 import Modal from '../components/common/Modal';
 import LoadingState from '../components/common/LoadingState';
 import EmptyState from '../components/common/EmptyState';
+import Pagination from '../components/common/Pagination';
 import { formatRupees } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -81,6 +83,13 @@ export default function AdminPage() {
     targetTitle: '',
     reason: '',
   });
+
+  // Pagination States (10 items per page)
+  const ADMIN_PAGE_SIZE = 10;
+  const [reportsPage, setReportsPage] = useState(1);
+  const [listingsPage, setListingsPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [auditPage, setAuditPage] = useState(1);
 
   const fetchData = async () => {
     if (!isAdmin || !isSupabaseConfigured) return;
@@ -170,12 +179,8 @@ export default function AdminPage() {
 
       setProfiles(profData || []);
 
-      // 5. Fetch Institutions
-      const { data: instData } = await supabase
-        .from('institutions')
-        .select('*')
-        .order('name');
-
+      // 5. Fetch Institutions (cached)
+      const instData = await fetchCachedInstitutions();
       setInstitutions(instData || []);
 
       // 6. Fetch Audit Logs
@@ -253,6 +258,7 @@ export default function AdminPage() {
           throw error;
         }
 
+        invalidateCachePattern('listings');
         setFeedback({ type: 'success', message: `Listing "${modModal.targetTitle}" has been removed from marketplace.` });
       } else if (modModal.type === 'suspend_user') {
         const { error } = await supabase.rpc('admin_suspend_user', {
@@ -365,6 +371,22 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  // Derived Paginated Data
+  const filteredReports = reports.filter((r) => reportFilter === 'all' || r.status === reportFilter);
+  const totalReportPages = Math.ceil(filteredReports.length / ADMIN_PAGE_SIZE) || 1;
+  const paginatedReports = filteredReports.slice((reportsPage - 1) * ADMIN_PAGE_SIZE, reportsPage * ADMIN_PAGE_SIZE);
+
+  const filteredListings = listings.filter((l) => l.title.toLowerCase().includes(listingSearch.toLowerCase()));
+  const totalListingPages = Math.ceil(filteredListings.length / ADMIN_PAGE_SIZE) || 1;
+  const paginatedListings = filteredListings.slice((listingsPage - 1) * ADMIN_PAGE_SIZE, listingsPage * ADMIN_PAGE_SIZE);
+
+  const filteredUsers = profiles.filter((p) => p.display_name.toLowerCase().includes(userSearch.toLowerCase()));
+  const totalUserPages = Math.ceil(filteredUsers.length / ADMIN_PAGE_SIZE) || 1;
+  const paginatedUsers = filteredUsers.slice((usersPage - 1) * ADMIN_PAGE_SIZE, usersPage * ADMIN_PAGE_SIZE);
+
+  const totalAuditPages = Math.ceil(auditLogs.length / ADMIN_PAGE_SIZE) || 1;
+  const paginatedAuditLogs = auditLogs.slice((auditPage - 1) * ADMIN_PAGE_SIZE, auditPage * ADMIN_PAGE_SIZE);
 
   return (
     <div style={{ maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
@@ -584,7 +606,10 @@ export default function AdminPage() {
               <button
                 key={st}
                 type="button"
-                onClick={() => setReportFilter(st)}
+                onClick={() => {
+                  setReportFilter(st);
+                  setReportsPage(1);
+                }}
                 style={{
                   padding: '4px 10px',
                   borderRadius: '9999px',
@@ -602,9 +627,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {reports
-            .filter((r) => reportFilter === 'all' || r.status === reportFilter)
-            .map((rep) => {
+          {paginatedReports.map((rep) => {
               const isListingTarget = Boolean(rep.listing_id && rep.listings);
               const isUserTarget = Boolean(rep.reported_user_id && rep.reported_user);
 
@@ -764,6 +787,17 @@ export default function AdminPage() {
               );
             })}
 
+          {filteredReports.length > 0 && (
+            <Pagination
+              currentPage={reportsPage}
+              totalPages={totalReportPages}
+              totalItems={filteredReports.length}
+              pageSize={ADMIN_PAGE_SIZE}
+              onPageChange={setReportsPage}
+              itemName="reports"
+            />
+          )}
+
           {reports.length === 0 && (
             <EmptyState
               title="No Reports Filed"
@@ -779,14 +813,15 @@ export default function AdminPage() {
           <Input
             placeholder="Search listings by title or seller..."
             value={listingSearch}
-            onChange={(e) => setListingSearch(e.target.value)}
+            onChange={(e) => {
+              setListingSearch(e.target.value);
+              setListingsPage(1);
+            }}
             prefix={<Search size={16} />}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {listings
-              .filter((l) => l.title.toLowerCase().includes(listingSearch.toLowerCase()))
-              .map((l) => (
+            {paginatedListings.map((l) => (
                 <Card key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-3)' }}>
                   <div>
                     <h4 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, margin: 0 }}>{l.title}</h4>
@@ -825,6 +860,17 @@ export default function AdminPage() {
                 </Card>
               ))}
           </div>
+
+          {filteredListings.length > 0 && (
+            <Pagination
+              currentPage={listingsPage}
+              totalPages={totalListingPages}
+              totalItems={filteredListings.length}
+              pageSize={ADMIN_PAGE_SIZE}
+              onPageChange={setListingsPage}
+              itemName="listings"
+            />
+          )}
         </div>
       )}
 
@@ -834,14 +880,15 @@ export default function AdminPage() {
           <Input
             placeholder="Search students by display name..."
             value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
+            onChange={(e) => {
+              setUserSearch(e.target.value);
+              setUsersPage(1);
+            }}
             prefix={<Search size={16} />}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {profiles
-              .filter((p) => p.display_name?.toLowerCase().includes(userSearch.toLowerCase()))
-              .map((p) => {
+            {paginatedUsers.map((p) => {
                 const isSuspended = p.account_status === 'suspended';
 
                 return (
@@ -902,6 +949,17 @@ export default function AdminPage() {
                 );
               })}
           </div>
+
+          {filteredUsers.length > 0 && (
+            <Pagination
+              currentPage={usersPage}
+              totalPages={totalUserPages}
+              totalItems={filteredUsers.length}
+              pageSize={ADMIN_PAGE_SIZE}
+              onPageChange={setUsersPage}
+              itemName="students"
+            />
+          )}
         </div>
       )}
 
@@ -953,7 +1011,7 @@ export default function AdminPage() {
             Immutable record of all administrative actions, suspensions, and content takedowns.
           </p>
 
-          {auditLogs.map((log) => (
+          {paginatedAuditLogs.map((log) => (
             <Card key={log.id} style={{ padding: 'var(--space-3)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
@@ -978,6 +1036,17 @@ export default function AdminPage() {
               </div>
             </Card>
           ))}
+
+          {auditLogs.length > 0 && (
+            <Pagination
+              currentPage={auditPage}
+              totalPages={totalAuditPages}
+              totalItems={auditLogs.length}
+              pageSize={ADMIN_PAGE_SIZE}
+              onPageChange={setAuditPage}
+              itemName="audit logs"
+            />
+          )}
 
           {auditLogs.length === 0 && (
             <EmptyState

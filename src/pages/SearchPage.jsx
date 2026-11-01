@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, SlidersHorizontal, BookOpen, MapPin, RefreshCw, AlertTriangle } from 'lucide-react';
 import Input from '../components/common/Input';
@@ -8,9 +8,13 @@ import Card from '../components/common/Card';
 import Chip from '../components/common/Chip';
 import Skeleton from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
+import Pagination from '../components/common/Pagination';
 import { BOOK_CATEGORIES, formatRupees, getListingImageUrl, matchesInstitutionType } from '../lib/utils';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions, fetchWithCache } from '../lib/cache';
 import './SearchPage.css';
+
+const PAGE_SIZE = 12;
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,18 +34,15 @@ export default function SearchPage() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef(null);
 
-  // Fetch active institutions for the filter dropdown
+  // Fetch active institutions with client caching (15 min TTL)
   useEffect(() => {
     async function loadInstitutions() {
-      if (!isSupabaseConfigured) return;
       try {
-        const { data, error } = await supabase
-          .from('institutions')
-          .select('id, name, city, area, institution_type')
-          .eq('is_active', true)
-          .order('name');
-        if (!error && data) setInstitutions(data);
+        const data = await fetchCachedInstitutions();
+        if (data) setInstitutions(data);
       } catch (err) {
         console.error('Failed to load institutions:', err);
       }
@@ -116,8 +117,13 @@ export default function SearchPage() {
         dbQuery = dbQuery.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await dbQuery;
-      if (error) throw error;
+      // Cache query results (60s TTL)
+      const cacheKey = `listings:search:${selectedCategory}_${selectedInstitution}_${minPrice}_${maxPrice}_${sortBy}`;
+      const data = await fetchWithCache(cacheKey, async () => {
+        const { data: dbData, error } = await dbQuery;
+        if (error) throw error;
+        return dbData || [];
+      }, 60000);
 
       let resultData = data || [];
 
@@ -152,6 +158,7 @@ export default function SearchPage() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     searchListings();
   }, [query, selectedCategory, selectedInstitutionType, selectedInstitution, minPrice, maxPrice, sortBy]);
 
@@ -163,8 +170,22 @@ export default function SearchPage() {
     setMinPrice('');
     setMaxPrice('');
     setSortBy('newest');
+    setCurrentPage(1);
     setSearchParams({});
   };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    if (resultsTopRef.current) {
+      resultsTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const totalPages = Math.ceil(listings.length / PAGE_SIZE) || 1;
+  const paginatedListings = listings.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="search-page">
@@ -315,6 +336,7 @@ export default function SearchPage() {
 
       {/* Results Section */}
       <section className="search-results-section">
+        <div ref={resultsTopRef} />
         {fetchError && (
           <Card style={{ textAlign: 'center', padding: 'var(--space-6)', borderColor: 'var(--color-danger)' }}>
             <div style={{ display: 'inline-flex', color: 'var(--color-danger)', marginBottom: 'var(--space-2)' }}>
@@ -345,56 +367,68 @@ export default function SearchPage() {
         )}
 
         {!loading && !fetchError && listings.length > 0 && (
-          <div className="listings-grid">
-            {listings.map((item) => {
-              const primaryImgPath = item.listing_images?.[0]?.storage_path;
-              const imgUrl = getListingImageUrl(primaryImgPath);
+          <>
+            <div className="listings-grid">
+              {paginatedListings.map((item) => {
+                const primaryImgPath = item.listing_images?.[0]?.storage_path;
+                const imgUrl = getListingImageUrl(primaryImgPath);
 
-              return (
-                <Link key={item.id} to={`/listings/${item.id}`} className="listing-card-link">
-                  <Card hoverable className="listing-card">
-                    <div className="listing-card__image-container">
-                      {imgUrl ? (
-                        <img
-                          src={imgUrl}
-                          alt={item.title}
-                          loading="lazy"
-                          className="listing-card__image"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'flex';
-                            }
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="listing-card__image-fallback"
-                        style={{ display: imgUrl ? 'none' : 'flex' }}
-                      >
-                        <BookOpen size={36} />
+                return (
+                  <Link key={item.id} to={`/listings/${item.id}`} className="listing-card-link">
+                    <Card hoverable className="listing-card">
+                      <div className="listing-card__image-container">
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={item.title}
+                            loading="lazy"
+                            className="listing-card__image"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextSibling) {
+                                e.target.nextSibling.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="listing-card__image-fallback"
+                          style={{ display: imgUrl ? 'none' : 'flex' }}
+                        >
+                          <BookOpen size={36} />
+                        </div>
+                        <div className="listing-card__condition-badge">
+                          <Chip variant="default">{item.condition}</Chip>
+                        </div>
                       </div>
-                      <div className="listing-card__condition-badge">
-                        <Chip variant="default">{item.condition}</Chip>
+                      <div className="listing-card__content">
+                        <div className="listing-card__price-row">
+                          <span className="listing-card__price">{formatRupees(item.price_paise)}</span>
+                          <span className="listing-card__category">{item.category}</span>
+                        </div>
+                        <h3 className="listing-card__title">{item.title}</h3>
+                        {item.author && <p className="listing-card__author">by {item.author}</p>}
+                        <div className="listing-card__footer">
+                          <MapPin size={13} aria-hidden="true" />
+                          <span>{item.institutions?.name || 'Local Campus'}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="listing-card__content">
-                      <div className="listing-card__price-row">
-                        <span className="listing-card__price">{formatRupees(item.price_paise)}</span>
-                        <span className="listing-card__category">{item.category}</span>
-                      </div>
-                      <h3 className="listing-card__title">{item.title}</h3>
-                      {item.author && <p className="listing-card__author">by {item.author}</p>}
-                      <div className="listing-card__footer">
-                        <MapPin size={13} aria-hidden="true" />
-                        <span>{item.institutions?.name || 'Local Campus'}</span>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={listings.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={handlePageChange}
+              itemName="textbooks"
+            />
+          </>
         )}
 
         {!loading && !fetchError && listings.length === 0 && (

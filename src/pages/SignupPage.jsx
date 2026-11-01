@@ -9,6 +9,7 @@ import Alert from '../components/common/Alert';
 import { INSTITUTION_TYPES, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions } from '../lib/cache';
 
 // Fallback seed institutions for offline/pre-DB inspection
 const FALLBACK_INSTITUTIONS = [
@@ -50,20 +51,13 @@ export default function SignupPage() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Fetch active institutions from Supabase
+  // Fetch active institutions with client cache
   useEffect(() => {
     async function loadInstitutions() {
       try {
-        const { data, error } = await supabase
-          .from('institutions')
-          .select('id, name, city, area, institution_type')
-          .eq('is_active', true)
-          .order('name');
-
-        if (!error && data && data.length > 0) {
+        const data = await fetchCachedInstitutions();
+        if (data && data.length > 0) {
           setAllInstitutions(data);
-        } else if (error) {
-          console.warn('Could not fetch remote institutions, using default Pune list:', error.message);
         }
       } catch (err) {
         console.warn('Failed to load institutions from Supabase:', err);

@@ -32,6 +32,7 @@ import Modal from '../components/common/Modal';
 import { formatRupees, getListingImageUrl, validateAndFormatWhatsApp } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
 // Fallback seed institutions
 const FALLBACK_INSTITUTIONS = [
@@ -103,23 +104,17 @@ export default function ProfilePage() {
 
   // Load active institutions
   useEffect(() => {
-    async function fetchInstitutions() {
-      if (!isSupabaseConfigured) return;
+    async function loadInstitutions() {
       try {
-        const { data, error } = await supabase
-          .from('institutions')
-          .select('id, name, city, area')
-          .eq('is_active', true)
-          .order('name');
-
-        if (!error && data && data.length > 0) {
+        const data = await fetchCachedInstitutions();
+        if (data && data.length > 0) {
           setInstitutions(data);
         }
       } catch (err) {
         console.error('Error fetching institutions:', err);
       }
     }
-    fetchInstitutions();
+    loadInstitutions();
   }, []);
 
   // Check existing account deletion request
@@ -275,6 +270,7 @@ export default function ProfilePage() {
         .update({ status: 'closed', responded_at: new Date().toISOString() })
         .eq('listing_id', listingId);
 
+      invalidateCachePattern('listings');
       setStatusMessage({ type: 'success', text: 'Textbook marked as Sold!' });
       await fetchMyListings();
     } catch (err) {
@@ -302,6 +298,7 @@ export default function ProfilePage() {
         .update({ status: 'closed', responded_at: new Date().toISOString() })
         .eq('listing_id', listingId);
 
+      invalidateCachePattern('listings');
       setStatusMessage({ type: 'info', text: 'Listing removed from the marketplace.' });
       await fetchMyListings();
     } catch (err) {

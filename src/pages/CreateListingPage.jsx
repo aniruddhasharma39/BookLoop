@@ -9,6 +9,7 @@ import Alert from '../components/common/Alert';
 import { BOOK_CATEGORIES, BOOK_CONDITIONS, rupeesToPaise, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
 export default function CreateListingPage() {
   const { user, profile } = useAuth();
@@ -37,18 +38,12 @@ export default function CreateListingPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch active institutions from Supabase
+  // Fetch active institutions with client cache
   useEffect(() => {
     async function loadInstitutions() {
-      if (!isSupabaseConfigured) return;
       try {
-        const { data, error } = await supabase
-          .from('institutions')
-          .select('id, name, city, area, institution_type')
-          .eq('is_active', true)
-          .order('name');
-
-        if (!error && data) {
+        const data = await fetchCachedInstitutions();
+        if (data) {
           setInstitutions(data);
 
           // If user has a default institution in profile, initialize with it
@@ -245,6 +240,7 @@ export default function CreateListingPage() {
       }
 
       setUploadStatus('Finalizing listing...');
+      invalidateCachePattern('listings');
       setSuccessMessage('Your textbook is now listed on BookLoop!');
       setTimeout(() => {
         navigate(`/listings/${listingData.id}`);

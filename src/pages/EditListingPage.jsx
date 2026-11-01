@@ -18,6 +18,7 @@ import {
 } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
 export default function EditListingPage() {
   const { id } = useParams();
@@ -61,12 +62,8 @@ export default function EditListingPage() {
       try {
         setLoading(true);
 
-        // 1. Fetch institutions
-        const { data: instData } = await supabase
-          .from('institutions')
-          .select('id, name, city, area, institution_type')
-          .eq('is_active', true)
-          .order('name');
+        // 1. Fetch institutions (cached)
+        const instData = await fetchCachedInstitutions();
         if (instData) setInstitutions(instData);
 
         // 2. Fetch the listing
@@ -262,6 +259,7 @@ export default function EditListingPage() {
         }
       }
 
+      invalidateCachePattern('listings');
       setSuccessMessage('Listing updated successfully!');
       setTimeout(() => {
         navigate(`/listings/${id}`);
@@ -294,6 +292,7 @@ export default function EditListingPage() {
         await supabase.from('listings').update({ status: 'sold', sold_at: new Date().toISOString() }).eq('id', id);
       }
 
+      invalidateCachePattern('listings');
       setStatus('sold');
       setSuccessMessage('Textbook marked as Sold!');
       setTimeout(() => {
@@ -321,6 +320,7 @@ export default function EditListingPage() {
         .eq('listing_id', id)
         .in('status', ['pending', 'accepted']);
 
+      invalidateCachePattern('listings');
       setStatus('removed');
       setSuccessMessage('Listing removed from marketplace.');
       setTimeout(() => {

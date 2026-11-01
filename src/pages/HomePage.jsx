@@ -8,6 +8,7 @@ import Skeleton from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import { BOOK_CATEGORIES, formatRupees, getListingImageUrl } from '../lib/utils';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchWithCache } from '../lib/cache';
 import './HomePage.css';
 
 export default function HomePage() {
@@ -30,29 +31,30 @@ export default function HomePage() {
       setLoading(true);
       setFetchError(null);
 
-      const { data, error } = await supabase
-        .from('listings')
-        .select(`
-          id,
-          title,
-          author,
-          category,
-          condition,
-          price_paise,
-          status,
-          created_at,
-          institutions (id, name, area),
-          listing_images (storage_path, display_order)
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(8);
+      const data = await fetchWithCache('listings:home', async () => {
+        const { data: fetched, error } = await supabase
+          .from('listings')
+          .select(`
+            id,
+            title,
+            author,
+            category,
+            condition,
+            price_paise,
+            status,
+            created_at,
+            institutions (id, name, area),
+            listing_images (storage_path, display_order)
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(8);
 
-      if (error) {
-        throw error;
-      } else {
-        setNewestListings(data || []);
-      }
+        if (error) throw error;
+        return fetched || [];
+      }, 120000); // 2-minute cache
+
+      setNewestListings(data || []);
     } catch (err) {
       console.error('Error fetching newest listings from Supabase:', err);
       setFetchError(err.message || 'Unable to connect to the campus marketplace.');
