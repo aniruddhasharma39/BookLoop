@@ -6,7 +6,9 @@ export default function SearchableInstitutionSelect({
   institutionType = 'College',
   onTypeChange,
   institutionId = '',
+  selectedInstitutionId = '',
   onInstitutionChange,
+  onSelect,
   institutions = [],
   required = false,
   label = 'Educational Institution',
@@ -16,6 +18,21 @@ export default function SearchableInstitutionSelect({
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  // Normalize effective selected ID and category
+  const effectiveId = institutionId || selectedInstitutionId || '';
+
+  const isSchool = institutionType?.toLowerCase() === 'school';
+  const isCollege = institutionType?.toLowerCase() === 'college';
+  const isOthers =
+    institutionType?.toLowerCase() === 'other' || institutionType?.toLowerCase() === 'others';
+
+  const normalizedType = isSchool ? 'School' : isOthers ? 'Others' : 'College';
+
+  // Category counts from directory
+  const schoolCount = institutions.filter((item) => matchesInstitutionType(item, 'School')).length;
+  const collegeCount = institutions.filter((item) => matchesInstitutionType(item, 'College')).length;
+  const othersCount = institutions.filter((item) => matchesInstitutionType(item, 'Others')).length;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -39,13 +56,10 @@ export default function SearchableInstitutionSelect({
     }
   }, [isOpen]);
 
-  // Filter institutions based on active tier (School / College / Others)
-  let tierInstitutions = institutions.filter((item) => matchesInstitutionType(item, institutionType));
-  if (tierInstitutions.length === 0) {
-    tierInstitutions = institutions;
-  }
+  // Strictly filter institutions based on selected category (School, College, or Others)
+  const tierInstitutions = institutions.filter((item) => matchesInstitutionType(item, normalizedType));
 
-  // Filter based on search query
+  // Filter based on in-dropdown search query
   const searchFilteredInstitutions = tierInstitutions.filter((item) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
@@ -56,39 +70,48 @@ export default function SearchableInstitutionSelect({
   });
 
   // Find currently selected institution
-  const selectedInstitution = institutions.find((i) => i.id === institutionId);
+  const selectedInstitution = institutions.find((i) => i.id === effectiveId);
+
+  const notifyChange = (id, inst) => {
+    if (onInstitutionChange) onInstitutionChange(id, inst);
+    if (onSelect) onSelect(id, inst);
+  };
 
   const handleTypeSelect = (newType) => {
     if (onTypeChange) {
       onTypeChange(newType);
     }
-    // If the selected institution does not match the new type, reset selection
+    // If the selected institution does not belong to the newly selected category, reset selection
     if (selectedInstitution && !matchesInstitutionType(selectedInstitution, newType)) {
-      if (onInstitutionChange) onInstitutionChange('', null);
+      notifyChange('', null);
     }
   };
 
   const handleSelectInstitution = (inst) => {
-    if (onInstitutionChange) {
-      onInstitutionChange(inst.id, inst);
-    }
+    notifyChange(inst.id, inst);
     setIsOpen(false);
     setSearchTerm('');
   };
 
   const handleClear = (e) => {
     e.stopPropagation();
-    if (onInstitutionChange) {
-      onInstitutionChange('', null);
-    }
+    notifyChange('', null);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-      {/* 1. Education Tier Selector: School vs College vs Others */}
+      {/* 1. Category Switcher: School vs College vs Others */}
       <div>
-        <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: 'var(--space-1)' }}>
-          Category / Education Level {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
+        <label
+          style={{
+            display: 'block',
+            fontSize: 'var(--font-size-xs)',
+            fontWeight: 600,
+            color: 'var(--color-text-main)',
+            marginBottom: 'var(--space-1)',
+          }}
+        >
+          Category / Institution Type {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
         </label>
         <div
           style={{
@@ -97,6 +120,7 @@ export default function SearchableInstitutionSelect({
             gap: 'var(--space-2)',
           }}
         >
+          {/* School Tab */}
           <button
             type="button"
             onClick={() => handleTypeSelect('School')}
@@ -107,8 +131,8 @@ export default function SearchableInstitutionSelect({
               gap: '6px',
               padding: '8px 10px',
               borderRadius: 'var(--radius-md)',
-              border: `2px solid ${institutionType === 'School' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-              backgroundColor: institutionType === 'School' ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
+              border: `2px solid ${isSchool ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
+              backgroundColor: isSchool ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
               color: 'var(--color-primary-navy)',
               fontWeight: 600,
               fontSize: 'var(--font-size-xs)',
@@ -118,9 +142,10 @@ export default function SearchableInstitutionSelect({
             }}
           >
             <School size={16} />
-            <span>School</span>
+            <span>School {schoolCount > 0 ? `(${schoolCount})` : ''}</span>
           </button>
 
+          {/* College Tab */}
           <button
             type="button"
             onClick={() => handleTypeSelect('College')}
@@ -131,8 +156,8 @@ export default function SearchableInstitutionSelect({
               gap: '6px',
               padding: '8px 10px',
               borderRadius: 'var(--radius-md)',
-              border: `2px solid ${institutionType === 'College' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-              backgroundColor: institutionType === 'College' ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
+              border: `2px solid ${isCollege ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
+              backgroundColor: isCollege ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
               color: 'var(--color-primary-navy)',
               fontWeight: 600,
               fontSize: 'var(--font-size-xs)',
@@ -142,12 +167,13 @@ export default function SearchableInstitutionSelect({
             }}
           >
             <GraduationCap size={16} />
-            <span>College</span>
+            <span>College {collegeCount > 0 ? `(${collegeCount})` : ''}</span>
           </button>
 
+          {/* Others / Coaching Tab */}
           <button
             type="button"
-            onClick={() => handleTypeSelect('Other')}
+            onClick={() => handleTypeSelect('Others')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -155,8 +181,8 @@ export default function SearchableInstitutionSelect({
               gap: '6px',
               padding: '8px 10px',
               borderRadius: 'var(--radius-md)',
-              border: `2px solid ${institutionType === 'Other' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-              backgroundColor: institutionType === 'Other' ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
+              border: `2px solid ${isOthers ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
+              backgroundColor: isOthers ? 'var(--color-secondary-soft-blue)' : '#FFFFFF',
               color: 'var(--color-primary-navy)',
               fontWeight: 600,
               fontSize: 'var(--font-size-xs)',
@@ -166,18 +192,26 @@ export default function SearchableInstitutionSelect({
             }}
           >
             <Building2 size={16} />
-            <span>Others / Coaching</span>
+            <span>Others {othersCount > 0 ? `(${othersCount})` : ''}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Searchable Dropdown */}
+      {/* 2. Searchable Combobox Dropdown */}
       <div ref={dropdownRef} style={{ position: 'relative' }}>
-        <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: 'var(--space-1)' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: 'var(--font-size-xs)',
+            fontWeight: 600,
+            color: 'var(--color-text-main)',
+            marginBottom: 'var(--space-1)',
+          }}
+        >
           {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
         </label>
 
-        {/* Trigger Button */}
+        {/* Trigger Bar */}
         <div
           onClick={() => setIsOpen(!isOpen)}
           style={{
@@ -208,9 +242,9 @@ export default function SearchableInstitutionSelect({
               </div>
             ) : (
               <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                {institutionType === 'School'
+                {isSchool
                   ? 'Select your school...'
-                  : institutionType === 'College'
+                  : isCollege
                     ? 'Select your college / university...'
                     : 'Select your coaching academy...'}
               </span>
@@ -285,7 +319,7 @@ export default function SearchableInstitutionSelect({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={`Search ${tierInstitutions.length} ${institutionType.toLowerCase()}s by name or area...`}
+                placeholder={`Search ${tierInstitutions.length} ${normalizedType.toLowerCase()}s by name or area...`}
                 style={{
                   width: '100%',
                   border: 'none',
@@ -327,7 +361,7 @@ export default function SearchableInstitutionSelect({
             >
               {searchFilteredInstitutions.length > 0 ? (
                 searchFilteredInstitutions.map((inst) => {
-                  const isSelected = inst.id === institutionId;
+                  const isSelected = inst.id === effectiveId;
 
                   return (
                     <div
@@ -370,8 +404,16 @@ export default function SearchableInstitutionSelect({
                 })
               ) : (
                 <div style={{ padding: 'var(--space-4)', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-                  No {institutionType.toLowerCase()}s found matching <strong>"{searchTerm}"</strong>.
-                  <div style={{ marginTop: '4px', fontSize: '11px' }}>Try searching by campus area or check other level tabs.</div>
+                  {searchTerm ? (
+                    <>
+                      No {normalizedType.toLowerCase()}s found matching <strong>"{searchTerm}"</strong>.
+                      <div style={{ marginTop: '4px', fontSize: '11px' }}>Try searching by campus area or clear your search query.</div>
+                    </>
+                  ) : (
+                    <>
+                      No institutions registered in <strong>{normalizedType}</strong> category yet.
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -389,7 +431,9 @@ export default function SearchableInstitutionSelect({
                 alignItems: 'center',
               }}
             >
-              <span>Showing {searchFilteredInstitutions.length} of {tierInstitutions.length} {institutionType.toLowerCase()}s</span>
+              <span>
+                Showing {searchFilteredInstitutions.length} of {tierInstitutions.length} {normalizedType.toLowerCase()}s
+              </span>
               <span style={{ fontWeight: 600, color: 'var(--color-primary-navy)' }}>Indore Campus Directory</span>
             </div>
           </div>

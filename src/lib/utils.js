@@ -70,54 +70,54 @@ export const INSTITUTION_TYPES = [
 ];
 
 /**
- * Robust matcher for School vs College vs Other
- * Handles normalized 'School'/'College' as well as historical DB values
- * ('Engineering College', 'High School & Junior College', etc.)
+ * Accurate category matcher for School vs College vs Others
+ * Strictly maps to defined `inst.institution_type` ('School', 'College', 'Other' / 'Others')
+ * Falls back to name keywords ONLY if institution_type is completely undefined/blank.
  */
 export function matchesInstitutionType(inst, targetType) {
   if (!inst) return false;
   if (!targetType) return true;
 
-  const rawType = (inst.institution_type || '').toLowerCase();
-  const name = (inst.name || '').toLowerCase();
-  const target = targetType.toLowerCase();
+  const rawType = (inst.institution_type || '').toLowerCase().trim();
+  const target = targetType.toLowerCase().trim();
 
-  if (target === 'school') {
-    return (
-      rawType === 'school' ||
-      rawType.includes('school') ||
-      rawType.includes('junior') ||
-      rawType.includes('high') ||
-      rawType.includes('secondary') ||
-      name.includes('school') ||
-      name.includes('vidyalaya') ||
-      name.includes('prashala')
-    );
+  // 1. Primary Mapping: If category (institution_type) is defined on the institution, map directly!
+  if (rawType) {
+    if (target === 'school') {
+      return rawType === 'school' || rawType.startsWith('school') || rawType.includes('school');
+    }
+    if (target === 'college') {
+      return (
+        rawType === 'college' ||
+        rawType === 'university' ||
+        rawType.startsWith('college') ||
+        rawType.startsWith('univ')
+      );
+    }
+    if (target === 'other' || target === 'others') {
+      return (
+        rawType === 'other' ||
+        rawType === 'others' ||
+        rawType.includes('coaching') ||
+        rawType.includes('academy')
+      );
+    }
+    return false;
   }
 
-  if (target === 'college') {
+  // 2. Secondary heuristic fallback ONLY if institution_type is completely undefined/blank
+  const name = (inst.name || '').toLowerCase().trim();
+  if (target === 'school') {
     return (
-      rawType === 'college' ||
-      rawType === 'university' ||
-      rawType.includes('college') ||
-      rawType.includes('university') ||
-      rawType.includes('engineering') ||
-      rawType.includes('medical') ||
-      rawType.includes('degree') ||
-      rawType.includes('commerce') ||
-      rawType.includes('tech') ||
-      name.includes('college') ||
-      name.includes('institute') ||
-      name.includes('university')
+      name.includes('school') ||
+      name.includes('vidyalaya') ||
+      name.includes('prashala') ||
+      name.includes('higher secondary')
     );
   }
 
   if (target === 'other' || target === 'others') {
     return (
-      rawType === 'other' ||
-      rawType.includes('other') ||
-      rawType.includes('coaching') ||
-      rawType.includes('academy') ||
       name.includes('allen') ||
       name.includes('aakash') ||
       name.includes('coaching') ||
@@ -127,6 +127,14 @@ export function matchesInstitutionType(inst, targetType) {
       name.includes('kautilya') ||
       name.includes('prep') ||
       name.includes('catalyser')
+    );
+  }
+
+  if (target === 'college') {
+    return (
+      name.includes('college') ||
+      name.includes('institute') ||
+      name.includes('university')
     );
   }
 

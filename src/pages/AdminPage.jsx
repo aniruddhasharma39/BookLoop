@@ -42,7 +42,7 @@ import Modal from '../components/common/Modal';
 import LoadingState from '../components/common/LoadingState';
 import EmptyState from '../components/common/EmptyState';
 import Pagination from '../components/common/Pagination';
-import { formatRupees, formatListingRef, getListingImageUrl } from '../lib/utils';
+import { formatRupees, formatListingRef, getListingImageUrl, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
@@ -139,6 +139,7 @@ export default function AdminPage() {
   const [instListingCounts, setInstListingCounts] = useState({});
   const [showAddInstModal, setShowAddInstModal] = useState(false);
   const [newInst, setNewInst] = useState({ name: '', institution_type: 'College', city: 'Indore', area: '' });
+  const [instCategoryFilter, setInstCategoryFilter] = useState('All'); // 'All' | 'College' | 'School' | 'Others'
 
   // Institution Deletion Safety Modal
   const [deleteInstModal, setDeleteInstModal] = useState({
@@ -1571,15 +1572,11 @@ export default function AdminPage() {
                 Indore Institutions Directory
               </h3>
               <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
-                Engineering, Medical, Pharmacy, Commerce/Management, and Schools in Indore.
+                Engineering, Medical, Pharmacy, Commerce/Management, Schools, and Coaching in Indore.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <Button variant="outline" size="sm" onClick={handleSeedIndoreInstitutions} loading={actionLoading}>
-                <Sparkles size={14} />
-                <span>Purge Pune & Seed Indore Directory</span>
-              </Button>
               <Button variant="primary" size="sm" onClick={() => setShowAddInstModal(true)}>
                 <Plus size={14} />
                 <span>Add Institution</span>
@@ -1587,8 +1584,29 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Category Filter Tabs for Institutions Directory */}
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            {[
+              { id: 'All', label: `All (${institutions.length})` },
+              { id: 'College', label: `College (${institutions.filter((i) => matchesInstitutionType(i, 'College')).length})` },
+              { id: 'School', label: `School (${institutions.filter((i) => matchesInstitutionType(i, 'School')).length})` },
+              { id: 'Others', label: `Others (${institutions.filter((i) => matchesInstitutionType(i, 'Others')).length})` },
+            ].map((catTab) => (
+              <Button
+                key={catTab.id}
+                variant={instCategoryFilter === catTab.id ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setInstCategoryFilter(catTab.id)}
+              >
+                {catTab.label}
+              </Button>
+            ))}
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {institutions.map((inst) => {
+            {institutions
+              .filter((inst) => (instCategoryFilter === 'All' ? true : matchesInstitutionType(inst, instCategoryFilter)))
+              .map((inst) => {
               const uCount = instUserCounts[inst.id] || 0;
               const lCount = instListingCounts[inst.id] || 0;
 
@@ -2253,13 +2271,13 @@ export default function AdminPage() {
           />
 
           <Select
-            label="Institution Type *"
+            label="Category / Institution Type *"
             value={newInst.institution_type}
             onChange={(e) => setNewInst({ ...newInst, institution_type: e.target.value })}
             options={[
-              { value: 'College', label: 'College / University (Engineering, Medical, Commerce)' },
-              { value: 'School', label: 'School & Junior College' },
-              { value: 'Other', label: 'Coaching / Exam Prep Academy' },
+              { value: 'College', label: 'College / University (Engineering, Medical, Commerce, Pharmacy)' },
+              { value: 'School', label: 'School (CBSE / ICSE / State Board / K-12)' },
+              { value: 'Others', label: 'Others (Coaching Centers / Competitive Exam Hubs)' },
             ]}
           />
 
