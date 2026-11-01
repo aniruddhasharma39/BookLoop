@@ -56,18 +56,16 @@ WITH CHECK (public.is_admin_or_moderator(auth.uid()));
 CREATE OR REPLACE FUNCTION public.guard_interest_request_updates()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Allow admins
-    IF public.is_admin_or_moderator(auth.uid()) THEN
+    -- Allow trusted internal RPCs and admin operations
+    IF current_setting('bookloop.internal_rpc', true) = 'true' 
+       OR public.is_admin_or_moderator(auth.uid()) THEN
         NEW.updated_at := timezone('utc'::text, now());
         RETURN NEW;
     END IF;
 
     -- Block direct status tampering by buyers/sellers
     IF OLD.status IS DISTINCT FROM NEW.status THEN
-        -- If session_user is current_user (direct PostgREST call, not inside SECURITY DEFINER)
-        IF session_user = current_user AND auth.uid() IS NOT NULL THEN
-            RAISE EXCEPTION 'Direct interest request status updates are prohibited. Use accept_interest_request, decline_interest_request, or cancel_interest_request.';
-        END IF;
+        RAISE EXCEPTION 'Direct interest request status updates are prohibited. Use accept_interest_request, decline_interest_request, or cancel_interest_request.';
     END IF;
 
     NEW.updated_at := timezone('utc'::text, now());
@@ -238,6 +236,9 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
+
+    -- Set trusted internal RPC flag so trigger allows this transition
+    PERFORM set_config('bookloop.internal_rpc', 'true', true);
 
     SELECT seller_id, listing_id, status
     INTO v_seller_id, v_listing_id, v_status
