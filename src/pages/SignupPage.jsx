@@ -13,25 +13,41 @@ import { fetchCachedInstitutions } from '../lib/cache';
 
 // Fallback seed institutions for offline/pre-DB inspection
 const FALLBACK_INSTITUTIONS = [
-  // Schools
-  { id: '11111111-1111-1111-1111-111111111101', name: 'The Bishop’s School & Junior College', institution_type: 'School', area: 'Camp' },
-  { id: '11111111-1111-1111-1111-111111111102', name: 'St. Vincent’s High School and Junior College', institution_type: 'School', area: 'Camp' },
-  { id: '11111111-1111-1111-1111-111111111103', name: 'Loyola High School and Junior College', institution_type: 'School', area: 'Pashan' },
-  { id: '11111111-1111-1111-1111-111111111104', name: 'Delhi Public School (DPS Pune)', institution_type: 'School', area: 'Mohammadwadi' },
-  { id: '11111111-1111-1111-1111-111111111105', name: 'Orchid School', institution_type: 'School', area: 'Baner' },
-  { id: '11111111-1111-1111-1111-111111111106', name: 'Symbiosis School & Junior College', institution_type: 'School', area: 'Prabhat Road' },
+  // Engineering Colleges (Indore)
+  { id: '22222222-2222-2222-2222-222222222201', name: 'Acropolis Institute of Technology & Research (AITR)', institution_type: 'College', area: 'Bypass Road, Manglia' },
+  { id: '22222222-2222-2222-2222-222222222202', name: 'Shri Govindram Seksaria Institute of Technology and Science (SGSITS)', institution_type: 'College', area: 'Vallabh Nagar' },
+  { id: '22222222-2222-2222-2222-222222222203', name: 'Institute of Engineering & Technology, DAVV (IET DAVV)', institution_type: 'College', area: 'Khandwa Road' },
+  { id: '22222222-2222-2222-2222-222222222204', name: 'IPS Academy, Institute of Engineering & Science', institution_type: 'College', area: 'Rajendra Nagar' },
+  { id: '22222222-2222-2222-2222-222222222205', name: 'Medi-Caps University (Faculty of Engineering)', institution_type: 'College', area: 'A.B. Road, Pigdamber' },
+  { id: '22222222-2222-2222-2222-222222222206', name: 'Indian Institute of Technology Indore (IIT Indore)', institution_type: 'College', area: 'Simrol' },
 
-  // Colleges
-  { id: '22222222-2222-2222-2222-222222222201', name: 'College of Engineering, Pune (COEP Tech)', institution_type: 'College', area: 'Shivajinagar' },
-  { id: '22222222-2222-2222-2222-222222222202', name: 'Pune Institute of Computer Technology (PICT)', institution_type: 'College', area: 'Dhankawadi' },
-  { id: '22222222-2222-2222-2222-222222222203', name: 'Vishwakarma Institute of Technology (VIT)', institution_type: 'College', area: 'Bibwewadi' },
-  { id: '22222222-2222-2222-2222-222222222204', name: 'Fergusson College (Autonomous)', institution_type: 'College', area: 'FC Road' },
-  { id: '22222222-2222-2222-2222-222222222205', name: 'B. J. Government Medical College', institution_type: 'College', area: 'Pune Station' },
-  { id: '22222222-2222-2222-2222-222222222206', name: 'Brihan Maharashtra College of Commerce (BMCC)', institution_type: 'College', area: 'Shivajinagar' },
+  // Medical & Pharmacy (Indore)
+  { id: '22222222-2222-2222-2222-222222222207', name: 'Mahatma Gandhi Memorial Medical College (MGM)', institution_type: 'College', area: 'A.B. Road' },
+  { id: '22222222-2222-2222-2222-222222222208', name: 'Sri Aurobindo Institute of Medical Sciences (SAIMS)', institution_type: 'College', area: 'Sanwer Road' },
+  { id: '22222222-2222-2222-2222-222222222209', name: 'Index Medical College Hospital & Research Centre', institution_type: 'College', area: 'Nemawar Road' },
+  { id: '22222222-2222-2222-2222-222222222210', name: 'Department of Pharmacy, SGSITS', institution_type: 'College', area: 'Vallabh Nagar' },
+  { id: '22222222-2222-2222-2222-222222222211', name: 'Acropolis Institute of Pharmaceutical Education (AIPER)', institution_type: 'College', area: 'Manglia' },
+  { id: '22222222-2222-2222-2222-222222222212', name: 'Modern Institute of Pharmaceutical Sciences', institution_type: 'College', area: 'Alwasa' },
 
-  // Other / Coaching
-  { id: '33333333-3333-3333-3333-333333333301', name: 'Allen Career Institute - Pune Center', institution_type: 'Other', area: 'FC Road' },
-  { id: '33333333-3333-3333-3333-333333333302', name: 'Aakash Institute - Pune Hub', institution_type: 'Other', area: 'Kothrud' },
+  // Commerce & Management (Indore)
+  { id: '22222222-2222-2222-2222-222222222213', name: 'Institute of Management Studies, DAVV (IMS DAVV)', institution_type: 'College', area: 'Khandwa Road' },
+  { id: '22222222-2222-2222-2222-222222222214', name: 'Prestige Institute of Management & Research (PIMR)', institution_type: 'College', area: 'Scheme 54, Vijay Nagar' },
+  { id: '22222222-2222-2222-2222-222222222215', name: 'Jaipuria Institute of Management', institution_type: 'College', area: 'Indore-Dewas Highway' },
+  { id: '22222222-2222-2222-2222-222222222216', name: 'Daly College Business School (DCBS)', institution_type: 'College', area: 'Residency Area' },
+  { id: '22222222-2222-2222-2222-222222222217', name: 'Renaissance College of Commerce & Management', institution_type: 'College', area: 'Bypass Road' },
+
+  // Schools (Indore)
+  { id: '11111111-1111-1111-1111-111111111101', name: 'The Daly College', institution_type: 'School', area: 'Residency Area' },
+  { id: '11111111-1111-1111-1111-111111111102', name: 'Delhi Public School (DPS Indore)', institution_type: 'School', area: 'Nipania, Bypass Road' },
+  { id: '11111111-1111-1111-1111-111111111103', name: 'Choithram School', institution_type: 'School', area: 'Manik Bagh Road' },
+  { id: '11111111-1111-1111-1111-111111111104', name: 'The Emerald Heights International School', institution_type: 'School', area: 'A.B. Road, Rau' },
+  { id: '11111111-1111-1111-1111-111111111105', name: 'The Shishukunj International School', institution_type: 'School', area: 'Jhalaria, Bypass Road' },
+  { id: '11111111-1111-1111-1111-111111111106', name: 'St. Raphael’s Higher Secondary School', institution_type: 'School', area: '15 Old Palasia' },
+
+  // Coaching (Indore)
+  { id: '33333333-3333-3333-3333-333333333301', name: 'Allen Career Institute - Indore Center', institution_type: 'Other', area: 'South Tukoganj' },
+  { id: '33333333-3333-3333-3333-333333333302', name: 'Aakash Institute - Indore Hub', institution_type: 'Other', area: 'Vijay Nagar' },
+  { id: '33333333-3333-3333-3333-333333333303', name: 'Kautilya Academy', institution_type: 'Other', area: 'Bhawarkua' },
 ];
 
 export default function SignupPage() {
@@ -277,7 +293,7 @@ export default function SignupPage() {
             onChange={(e) => setInstitutionId(e.target.value)}
             options={filteredInstitutions.map((i) => ({
               value: i.id,
-              label: `${i.name} (${i.area || i.city || 'Pune'})`,
+              label: `${i.name} (${i.area || i.city || 'Indore'})`,
             }))}
             placeholder={`Choose your ${institutionType.toLowerCase()}...`}
             helperText="Selecting your institution helps juniors find nearby books. It is self-selected, not proof of attendance."

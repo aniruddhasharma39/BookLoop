@@ -34,20 +34,25 @@ import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
-// Fallback seed institutions
+// Fallback seed institutions (Indore)
 const FALLBACK_INSTITUTIONS = [
-  { id: '11111111-1111-1111-1111-111111111101', name: 'The Bishop’s School & Junior College', area: 'Camp' },
-  { id: '11111111-1111-1111-1111-111111111102', name: 'St. Vincent’s High School and Junior College', area: 'Camp' },
-  { id: '11111111-1111-1111-1111-111111111103', name: 'Loyola High School and Junior College', area: 'Pashan' },
-  { id: '11111111-1111-1111-1111-111111111104', name: 'Delhi Public School (DPS Pune)', area: 'Mohammadwadi' },
-  { id: '11111111-1111-1111-1111-111111111105', name: 'Orchid School', area: 'Baner' },
-  { id: '11111111-1111-1111-1111-111111111106', name: 'Symbiosis School & Junior College', area: 'Prabhat Road' },
-  { id: '22222222-2222-2222-2222-222222222201', name: 'College of Engineering, Pune (COEP Tech)', area: 'Shivajinagar' },
-  { id: '22222222-2222-2222-2222-222222222202', name: 'Pune Institute of Computer Technology (PICT)', area: 'Dhankawadi' },
-  { id: '22222222-2222-2222-2222-222222222203', name: 'Vishwakarma Institute of Technology (VIT Pune)', area: 'Bibwewadi' },
-  { id: '22222222-2222-2222-2222-222222222204', name: 'Fergusson College', area: 'FC Road' },
-  { id: '22222222-2222-2222-2222-222222222205', name: 'B. J. Government Medical College', area: 'Sassoon Hospital Campus' },
-  { id: '22222222-2222-2222-2222-222222222206', name: 'Bharati Vidyapeeth Medical College', area: 'Katraj' },
+  { id: '22222222-2222-2222-2222-222222222201', name: 'Acropolis Institute of Technology & Research (AITR)', area: 'Bypass Road, Manglia' },
+  { id: '22222222-2222-2222-2222-222222222202', name: 'Shri Govindram Seksaria Institute of Technology and Science (SGSITS)', area: 'Vallabh Nagar' },
+  { id: '22222222-2222-2222-2222-222222222203', name: 'Institute of Engineering & Technology, DAVV (IET DAVV)', area: 'Khandwa Road' },
+  { id: '22222222-2222-2222-2222-222222222204', name: 'IPS Academy, Institute of Engineering & Science', area: 'Rajendra Nagar' },
+  { id: '22222222-2222-2222-2222-222222222205', name: 'Medi-Caps University (Faculty of Engineering)', area: 'A.B. Road, Pigdamber' },
+  { id: '22222222-2222-2222-2222-222222222206', name: 'Indian Institute of Technology Indore (IIT Indore)', area: 'Simrol' },
+  { id: '22222222-2222-2222-2222-222222222207', name: 'Mahatma Gandhi Memorial Medical College (MGM)', area: 'A.B. Road' },
+  { id: '22222222-2222-2222-2222-222222222208', name: 'Sri Aurobindo Institute of Medical Sciences (SAIMS)', area: 'Sanwer Road' },
+  { id: '22222222-2222-2222-2222-222222222209', name: 'Department of Pharmacy, SGSITS', area: 'Vallabh Nagar' },
+  { id: '22222222-2222-2222-2222-222222222213', name: 'Institute of Management Studies, DAVV (IMS DAVV)', area: 'Khandwa Road' },
+  { id: '22222222-2222-2222-2222-222222222214', name: 'Prestige Institute of Management & Research (PIMR)', area: 'Scheme 54, Vijay Nagar' },
+  { id: '11111111-1111-1111-1111-111111111101', name: 'The Daly College', area: 'Residency Area' },
+  { id: '11111111-1111-1111-1111-111111111102', name: 'Delhi Public School (DPS Indore)', area: 'Nipania, Bypass Road' },
+  { id: '11111111-1111-1111-1111-111111111103', name: 'Choithram School', area: 'Manik Bagh Road' },
+  { id: '11111111-1111-1111-1111-111111111104', name: 'The Emerald Heights International School', area: 'A.B. Road, Rau' },
+  { id: '11111111-1111-1111-1111-111111111105', name: 'The Shishukunj International School', area: 'Jhalaria, Bypass Road' },
+  { id: '11111111-1111-1111-1111-111111111106', name: 'St. Raphael’s Higher Secondary School', area: '15 Old Palasia' },
 ];
 
 const GRADUATION_YEARS = [

@@ -8,7 +8,7 @@ import Alert from '../components/common/Alert';
 import LoadingState from '../components/common/LoadingState';
 import EmptyState from '../components/common/EmptyState';
 import ReportModal from '../components/common/ReportModal';
-import { formatRupees, getListingImageUrl } from '../lib/utils';
+import { formatRupees, getListingImageUrl, formatListingRef } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchWithCache } from '../lib/cache';
@@ -324,6 +324,22 @@ export default function ListingDetailPage() {
         <div className="listing-detail__info">
           <div className="listing-detail__header">
             <div className="listing-detail__badges">
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: 'var(--color-secondary-soft-blue)',
+                  color: 'var(--color-primary-navy)',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  fontSize: 'var(--font-size-xs)',
+                }}
+              >
+                #{formatListingRef(book)}
+              </span>
               <Chip variant="accent">{book.category}</Chip>
               <Chip variant="default">{book.condition}</Chip>
               {book.status === 'sold' && <Chip variant="warning">SOLD</Chip>}

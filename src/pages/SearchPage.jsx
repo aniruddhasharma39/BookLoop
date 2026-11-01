@@ -9,7 +9,7 @@ import Chip from '../components/common/Chip';
 import Skeleton from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Pagination from '../components/common/Pagination';
-import { BOOK_CATEGORIES, formatRupees, getListingImageUrl, matchesInstitutionType } from '../lib/utils';
+import { BOOK_CATEGORIES, formatRupees, getListingImageUrl, matchesInstitutionType, formatListingRef } from '../lib/utils';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchCachedInstitutions, fetchWithCache } from '../lib/cache';
 import './SearchPage.css';
@@ -404,7 +404,12 @@ export default function SearchPage() {
                       <div className="listing-card__content">
                         <div className="listing-card__price-row">
                           <span className="listing-card__price">{formatRupees(item.price_paise)}</span>
-                          <span className="listing-card__category">{item.category}</span>
+                          <span className="listing-card__category">
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, marginRight: '6px', color: 'var(--color-primary-navy)' }}>
+                              #{formatListingRef(item)}
+                            </span>
+                            {item.category}
+                          </span>
                         </div>
                         <h3 className="listing-card__title">{item.title}</h3>
                         {item.author && <p className="listing-card__author">by {item.author}</p>}

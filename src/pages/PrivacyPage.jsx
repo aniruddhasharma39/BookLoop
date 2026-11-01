@@ -34,12 +34,12 @@ export default function PrivacyPage() {
             1. Our Student Privacy Principles
           </h2>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-main)', marginTop: 'var(--space-1)' }}>
-            BookLoop was built to protect Pune school and college students. Unlike general classifieds, we minimize personal data collection and enforce strict database-level privacy boundaries:
+            BookLoop was built to protect campus school and college students. Unlike general classifieds, we minimize personal data collection and enforce strict database-level privacy boundaries:
           </p>
           <ul style={{ paddingLeft: 'var(--space-5)', marginTop: 'var(--space-2)', fontSize: 'var(--font-size-sm)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <li><strong>No Public Phone or Email:</strong> Your phone number and email address are never exposed on search pages, book listings, or public profiles.</li>
             <li><strong>Controlled Handover Reveal:</strong> A seller's WhatsApp number is encrypted in the database and only revealed to a single buyer after the seller explicitly accepts their interest request.</li>
-            <li><strong>No Sensitive Geolocation:</strong> We never track, record, or share live GPS coordinates or home addresses. Location is limited to registered educational institutions (e.g. COEP Tech, Fergusson College).</li>
+            <li><strong>No Sensitive Geolocation:</strong> We never track, record, or share live GPS coordinates or home addresses. Location is limited to registered educational institutions (e.g. Acropolis, SGSITS, IET DAVV).</li>
             <li><strong>No Payment Card Storage:</strong> BookLoop does not process payments or store bank account/card numbers. Handover transactions are handled peer-to-peer upon physical book inspection.</li>
           </ul>
         </div>

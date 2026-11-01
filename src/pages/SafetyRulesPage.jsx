@@ -19,7 +19,7 @@ export default function SafetyRulesPage() {
           Community Rules & Meetup Safety Guidance
         </h1>
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-          Guidelines for safe, peer-to-peer textbook handovers across Pune schools and colleges.
+          Guidelines for safe, peer-to-peer textbook handovers across campus schools and colleges.
         </p>
       </div>
 

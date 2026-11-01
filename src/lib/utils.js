@@ -5,6 +5,20 @@ import { supabase } from './supabase';
  * Single source of truth for money formatting, categories, institution types and data transformations
  */
 
+// Format listing reference number (e.g. 'BL-10042' or 'BL-E7F2A1')
+export function formatListingRef(listingOrId) {
+  if (!listingOrId) return 'BL-1000';
+  if (typeof listingOrId === 'object') {
+    if (listingOrId.reference_no) return listingOrId.reference_no;
+    if (listingOrId.id) return `BL-${listingOrId.id.slice(0, 6).toUpperCase()}`;
+  }
+  if (typeof listingOrId === 'string') {
+    if (listingOrId.startsWith('BL-')) return listingOrId;
+    return `BL-${listingOrId.slice(0, 6).toUpperCase()}`;
+  }
+  return 'BL-1000';
+}
+
 // Convert integer paise to Indian Rupee string (e.g. 25000 paise -> ₹250)
 export function formatRupees(paise) {
   if (paise === null || paise === undefined || isNaN(paise)) return '₹0';

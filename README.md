@@ -1,7 +1,7 @@
-# BookLoop 📚 — Campus Textbook Marketplace (Pune MVP)
+# BookLoop 📚 — Campus Textbook Marketplace (Indore MVP / Trial Pilot)
 
 > **Official Project Handover & Technical Specification Document**  
-> A lightweight, student-to-student second-hand textbook marketplace built specifically for schools and colleges across Pune. Designed to make educational resources affordable, reduce paper waste, protect student privacy with daytime campus handovers, and run lightning-fast on a zero-server serverless architecture.
+> A lightweight, student-to-student second-hand textbook marketplace built specifically for schools and colleges across **Indore, Madhya Pradesh** (Acropolis, SGSITS, IET DAVV, IPS Academy, Medi-Caps, MGM Medical, SAIMS, IMS DAVV, PIMR, The Daly College, DPS, Emerald Heights, etc.). Designed to make educational resources affordable, reduce paper waste, protect student privacy with daytime campus handovers, and run lightning-fast on a zero-server serverless architecture.
 
 ---
 
@@ -37,7 +37,9 @@
 │  │ • Strict zero-trust table policies                                │ │
 │  │ • Isolated `public.user_contacts` for private student phone #s    │ │
 │  │ • `public_catalogue` view (security_invoker = true)               │ │
-│  │ • SECURITY DEFINER transactional stored procedures (RPCs)         │ │
+│  │ • Transactional stored procedures (RPCs)                          │ │
+│  │ • `public.listing_activity_logs` & triggers for audit trails      │ │
+│  │ • Sequence-backed reference numbers (`BL-XXXXX`)                  │ │
 │  │ • Composite B-Tree indexes for sub-10ms queries                   │ │
 │  └───────────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────┘
@@ -54,45 +56,54 @@
 
 ## 🚀 Key Functional Modules
 
-### 1. Student Authentication & Passwordless OTP
+### 1. Student Authentication, Passwordless OTP & Permanent Account Deletion
 - **Strict Verification:** Unverified accounts are strictly blocked from interacting with marketplace data.
-- **6-Digit OTP Login & Recovery:** Students who forget their password or want to log in on secondary devices (e.g., from laptop to phone) can request a 6-digit OTP code sent directly to their verified student email.
-- **Unified Email Templates:** Professional HTML transactional emails with BookLoop Navy branding for both signup verification and 6-digit one-time passcodes.
-- **Anti-Abuse & Rate Limiting:** Client and server rate-limiting protects against continuous requests:
-  - 60-second cooldown timer between OTP dispatch attempts.
-  - Maximum 3 code requests per 15-minute sliding window per email.
+- **6-Digit OTP Login & Recovery:** Students who forget their password or want to log in on secondary devices can request a 6-digit OTP code sent directly to their verified student email.
+- **Permanent Account Deletion (`admin_delete_user`):** When a student explicitly requests account deletion (rather than suspension), administrators can permanently delete their account from the console:
+  - Deletes the record directly from `auth.users` in Supabase.
+  - Cascades and permanently wipes their public profile, private contacts, active listings, and interest requests.
+  - Next time this email attempts to sign in, they are treated strictly as an **unregistered user**.
 
-### 2. Textbook Catalogue & Multi-Facet Search
-- **Instant Search with Debouncing:** Sub-300ms live query response as users type book titles, authors, or ISBNs.
-- **Campus Multi-Filtering:** Filter listings by Pune Institution (COEP, PICT, Fergusson, VIT, etc.), Academic Subject, Condition (`Like New`, `Good`, `Fair`), and Maximum Price.
-- **Paise Currency Accuracy:** All monetary values are strictly stored in Indian paise (integers) in the database to prevent floating-point rounding errors and formatted on the client as ₹ (INR).
-- **Client Pagination:** Clean pagination (`PAGE_SIZE = 8` or `12`) with first/last controls and accessible touch targets.
+### 2. Categorized Indore Institutions Directory & Management
+- **Categorized Directory:** Pre-loaded with recognized Indore institutions:
+  - **Engineering:** Acropolis Institute of Technology & Research (AITR), SGSITS, IET DAVV, IPS Academy, Medi-Caps University, OIST, SVKM's NMIMS MPSTME, IIT Indore.
+  - **Medical & Dental:** MGM Medical College, SAIMS, Index Medical College, Government College of Dentistry (GDC), Choithram College of Nursing.
+  - **Pharmacy:** Department of Pharmacy (SGSITS), Acropolis AIPER, Modern Institute of Pharmaceutical Sciences, Indore Institute of Pharmacy (IIP), SCOPE.
+  - **Commerce, Business & Management:** IMS DAVV, Prestige (PIMR), Jaipuria Institute of Management, Daly College Business School (DCBS), Renaissance College, SVIM, IIM Indore.
+  - **Schools:** The Daly College, Delhi Public School (DPS Indore), Choithram School, The Emerald Heights International School, The Shishukunj International School, St. Raphael's Higher Secondary School, Advanced Academy, Sri Sathya Sai Vidya Vihar, St. Paul.
+  - **Coaching Hubs:** Allen Career Institute (South Tukoganj), Aakash Institute (Vijay Nagar), Kautilya Academy (Bhawarkua), Physics Wallah (Bhawarkua).
+- **Safe Institution Deletion (`admin_delete_institution`):** Prevents orphaned user records by calculating linked student accounts and active listings, warning the administrator, and offering an optional reassignment target.
 
-### 3. Listing Creation & Media Storage
-- **Direct-to-CDN Uploads:** Users upload 1 to 3 photos of their physical textbook directly to Supabase Storage (`listing-photos`).
-- **Media Validation:** Validated on client and storage layer for MIME types (`image/jpeg`, `image/png`, `image/webp`) and file sizes capped at 5 MB each.
-- **Listing Lifecycle:** Listings progress through `active` ➔ `reserved` (pending handover) ➔ `sold` or `cancelled`. Sold and hidden items are excluded from the public catalogue.
+### 3. Listing Reference Numbers & Listings Moderation Dossier
+- **Listing Reference Numbers (`BL-XXXXX`):** Each listing is assigned a permanent reference number (e.g. `#BL-10042` or `#BL-E7F2A1`) backed by sequence `listing_ref_seq`. Reference numbers are visible across search cards, detail pages, and moderation consoles.
+- **Full Moderation Dossier:** Administrators can inspect any listing to view:
+  - Complete uploaded image gallery with zoom previews.
+  - Full title, author, edition, academic category, condition, course/exam, campus location, and description.
+  - Price in ₹ (stored as paise).
+  - Seller profile (display name, user ID, campus, account status, joined date).
+  - Associated student reports.
+- **End-to-End User Behavior & Lifecycle Audit Trail (From Timestamp 0):**
+  - Powered by `public.listing_activity_logs` and automatic database triggers.
+  - Visual vertical timeline logging every stage of the book's lifecycle with exact timestamps:
+    - 🟢 **Timestamp 0: Listing Created** (title, initial price, condition, category).
+    - ✏️ **Listing Edited** (price adjustments, title or description edits with previous/updated diffs).
+    - 📩 **Interest Request Received** (buyer student name, timestamp).
+    - ✅ **Interest Accepted & Contact Shared** (seller accepted request, WhatsApp number revealed).
+    - 🔄 **Switched Buyer (Revocation)** (seller revoked acceptance of Buyer A to entertain Buyer B).
+    - ❌ **Interest Declined** (seller declined request).
+    - 🚫 **Request Cancelled** (buyer cancelled request).
+    - 🏷️ **Marked Sold** (daylight transaction completed, remaining requests closed).
+    - 🛡️ **Admin Moderated** (takedown or suspension applied with audit reason).
 
-### 4. Privacy-First Handover & Interest Requests
+### 4. Privacy-First Handover & Meetup Protocol
 - **No Public Contact Exposure:** Student phone numbers and personal emails are never rendered publicly or returned by catalogue queries.
 - **WhatsApp Handover Protocol:**
   1. Buyer browses catalog and clicks **I'm Interested**.
   2. A row is inserted into `interest_requests` (`status = 'pending'`).
-  3. Seller receives an in-app badge notification and views requests on `/requests`.
-  4. Seller clicks **Accept & Share WhatsApp**.
-  5. The transactional stored procedure `accept_interest_request()` verifies seller ownership, transitions request to `accepted`, and temporarily locks other incoming requests.
-  6. Buyer can now invoke `get_seller_contact(request_id)` which validates accepted state and returns the seller's verified WhatsApp number for daylight campus coordination.
-  7. Once meetup is complete, seller marks the book as `sold`, automatically archiving all requests.
-
-### 5. Campus Safety & Administrative Moderation Suite
-- **Student Reporting:** Students can report inappropriate listings or suspicious accounts directly from listing cards.
-- **Role-Based Admin Guard:** Administrative interface (`/admin`) is strictly locked down:
-  - Frontend route checks `admin_roles` table for active role.
-  - Database RLS prevents unauthorized viewing of reports or audit logs.
-- **Moderator Actions:**
-  - One-click listing takedown (`admin_hide_listing`).
-  - Account suspension (`admin_suspend_user`) which terminates active listings and prevents subsequent actions.
-  - All moderation decisions write immutable records into `admin_audit_logs`.
+  3. Seller views requests on `/requests` and clicks **Accept & Share WhatsApp**.
+  4. The transactional stored procedure `accept_interest_request()` verifies seller ownership, transitions request to `accepted`, and locks other requests.
+  5. Buyer invokes `get_seller_contact(request_id)` which validates accepted state and returns the seller's verified WhatsApp number for daylight campus coordination.
+  6. Once meetup is complete, seller marks the book as `sold`, automatically archiving all requests.
 
 ---
 
@@ -107,6 +118,7 @@ CREATE INDEX idx_interest_requests_buyer_created ON public.interest_requests (bu
 CREATE INDEX idx_interest_requests_seller_created ON public.interest_requests (seller_id, created_at DESC);
 CREATE INDEX idx_listings_inst_status ON public.listings (institution_id, status);
 CREATE INDEX idx_listings_status_created ON public.listings (status, created_at DESC);
+CREATE INDEX idx_listing_activity_listing ON public.listing_activity_logs (listing_id, created_at ASC);
 ```
 
 ### 2. Parallel Network Ingestion (`Promise.all`)
@@ -165,11 +177,6 @@ The repository contains an automated security test suite in `supabase/tests/rls_
 | **Test 11**| Admin Removal Tamper Protection | Sellers cannot reactivate listings removed by moderators. |
 | **Test 12**| Schema Migration Auditing | `schema_migrations_tracker` records applied database schema versions. |
 
-### Running the RLS Test Suite
-1. Navigate to **Supabase Dashboard** > **SQL Editor**.
-2. Open and paste `supabase/tests/rls_security_tests.sql`.
-3. Click **Run**. All 12 assertions will output `SUCCESS` notices and execute an automatic rollback.
-
 ---
 
 ## 📦 Local Development & Setup
@@ -191,7 +198,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-public-key
 ### 3. Initialize Database
 In your Supabase SQL Editor, run:
 1. `supabase/COMPLETE_DATABASE_SETUP.sql` (Creates all tables, views, RLS policies, indexes, and RPCs).
-2. `supabase/seed.sql` (Loads Pune educational institutions and pilot textbook listings).
+2. `supabase/seed.sql` (Loads Indore educational institutions and storage bucket policies).
 
 ### 4. Create an Administrator
 ```sql
@@ -211,7 +218,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🚀 Production Deployment (Vercel)
 
-BookLoop is optimized for deployment on Vercel:
+BookLoop is deployed and verified on Vercel:
 
 1. Push your changes to the `main` branch of your GitHub repository.
 2. In your [Vercel Dashboard](https://vercel.com):
@@ -234,30 +241,6 @@ BookLoop is optimized for deployment on Vercel:
    }
    ```
 
-### Supabase URL Configuration
-Under **Supabase Dashboard** > **Authentication** > **URL Configuration**:
-- **Site URL:** `https://mybookloop.vercel.app`
-- **Redirect URLs:**
-  - `https://mybookloop.vercel.app/**`
-  - `http://localhost:5173/**`
-
----
-
-## 🔄 Operations, Maintenance & Keepalive
-
-### 1. Supabase Free Tier Keepalive
-Supabase free tier projects pause after 7 days of inactivity. To prevent platform downtime during student vacations, a GitHub Actions workflow is included at `.github/workflows/supabase-keepalive.yml`:
-- Runs on a daily cron schedule (`0 4 * * *`).
-- Pings the Supabase REST health endpoint using repository secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
-- Keeps the PostgreSQL compute active continuously.
-
-### 2. Database Backup Utility
-An automated database backup script is provided in `scripts/backup_db.js`. Run with Node:
-```bash
-node scripts/backup_db.js
-```
-Exports a JSON snapshot of listings, institutions, profiles, and reports into `backups/`.
-
 ---
 
 ## 📁 Repository Directory Structure
@@ -273,19 +256,18 @@ BookLoop/
 │   └── backup_db.js                 # Database backup snapshot script
 ├── src/
 │   ├── components/
-│   │   ├── common/                  # Reusable UI primitives (Button, Card, Input, Modal, Alert, Pagination)
+│   │   ├── common/                  # UI primitives (Button, Card, Input, Modal, Alert, Pagination)
 │   │   ├── layout/                  # Navigation bar, mobile drawer, footer
-│   │   ├── listings/                # ListingCard, ListingGrid, ImageGallery
-│   │   └── requests/                # RequestItem, RequestActions
 │   ├── context/
 │   │   └── AuthContext.jsx          # Auth session, OTP dispatcher, notification badges
 │   ├── lib/
 │   │   ├── cache.js                 # SWR cache with sessionStorage persistence
 │   │   ├── rateLimit.js             # Client-side rate-limiting for OTP requests
-│   │   └── supabase.js              # Supabase JavaScript client instance
+│   │   ├── supabase.js              # Supabase JavaScript client instance
+│   │   └── utils.js                 # Money format, reference number generator, categories
 │   ├── pages/                       # Route pages (HomePage, SearchPage, ListingDetailPage,
-│   │                                #             CreateListingPage, RequestsPage, ProfilePage,
-│   │                                #             LoginPage, AdminPage, NotFoundPage)
+│   │                                #             CreateListingPage, EditListingPage, RequestsPage,
+│   │                                #             ProfilePage, LoginPage, AdminPage, NotFoundPage)
 │   ├── styles/
 │   │   ├── design-tokens.css        # Color palette, spacing, typography tokens
 │   │   └── global.css               # Base CSS resets and utilities
@@ -293,11 +275,11 @@ BookLoop/
 │   ├── index.html                   # HTML entry point with subdomain sanitation
 │   └── main.jsx                     # Vite React root
 ├── supabase/
-│   ├── migrations/                  # Historical migration files (00000000000000 to 000000000003)
+│   ├── migrations/                  # Historical migrations (00000000000000 to 20261101000000)
 │   ├── tests/
 │   │   └── rls_security_tests.sql   # 12-assertion zero-trust test suite
 │   ├── COMPLETE_DATABASE_SETUP.sql  # Master single-file setup for fresh databases
-│   └── seed.sql                     # Seed data for Pune colleges and pilot textbooks
+│   └── seed.sql                     # Seed data for Indore colleges, schools and storage
 ├── vercel.json                      # Vercel SPA routing rewrites configuration
 ├── package.json                     # Project manifest and npm scripts
 └── README.md                        # Master handover and technical documentation
@@ -311,13 +293,13 @@ BookLoop/
 |---|---|---|
 | **Core Architecture** | React 19 + Supabase PostgreSQL | ✅ Verified & functional |
 | **Authentication** | Password + 6-digit OTP Email Login | ✅ Tested & verified |
-| **Email Templates** | HTML templates for verification & OTP | ✅ Deployed on Supabase |
+| **User Deletion** | Permanent account deletion (`admin_delete_user`) | ✅ Implemented & verified |
+| **Institutions** | Categorized Indore institutions catalog & safe deletion | ✅ Implemented & seeded |
+| **Listings Moderation** | Reference number `#BL-XXXXX` + dossier + user activity audit trail | ✅ Implemented & tested |
 | **Data Privacy** | WhatsApp numbers encrypted / private | ✅ Verified via isolated `user_contacts` & RPC |
 | **Security Suite** | 12 RLS test assertions in SQL | ✅ 12/12 Passing |
 | **Performance** | Concurrent queries + SWR cache + pagination | ✅ Implemented on `/requests` & catalogue |
-| **Moderation** | Report system + admin dashboard + audit logs | ✅ Active at `/admin` |
 | **Deployment** | Vercel production hosting with clean routing | ✅ Live at `https://mybookloop.vercel.app` |
-| **Maintenance** | Supabase keepalive workflow | ✅ Active in GitHub Actions |
 
 ---
 

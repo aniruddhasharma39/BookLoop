@@ -24,7 +24,7 @@ export default function TermsPage() {
       </div>
 
       <Alert variant="warning" title="Draft Agreement — Pending Review by Product Owner">
-        These terms govern participation in the BookLoop MVP pilot across Pune campuses. Review and adapt these clauses with your university or institutional legal advisors prior to commercial deployment.
+        These terms govern participation in the BookLoop campus marketplace. Review and adapt these clauses with your university or institutional legal advisors prior to commercial deployment.
       </Alert>
 
       <Card style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', lineHeight: 1.6 }}>
@@ -33,7 +33,7 @@ export default function TermsPage() {
             1. Peer-to-Peer Directory Only
           </h2>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-main)', marginTop: 'var(--space-1)' }}>
-            BookLoop is a student directory that connects peer buyers and sellers at educational institutions in Pune. BookLoop is <strong>not</strong> an online retailer, consignment agent, or escrow provider. Users inspect textbooks and exchange funds directly during in-person campus handovers.
+            BookLoop is a student directory that connects peer buyers and sellers at educational institutions. BookLoop is <strong>not</strong> an online retailer, consignment agent, or escrow provider. Users inspect textbooks and exchange funds directly during in-person campus handovers.
           </p>
         </div>
 
