@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
+import SearchableInstitutionSelect from '../components/common/SearchableInstitutionSelect';
 import Alert from '../components/common/Alert';
 import LoadingState from '../components/common/LoadingState';
 import EmptyState from '../components/common/EmptyState';
@@ -99,10 +100,14 @@ export default function EditListingPage() {
         if (listing.institution_id) {
           setInstitutionId(listing.institution_id);
           const currentInst = instData?.find((i) => i.id === listing.institution_id);
-          if (currentInst?.institution_type) {
-            setInstitutionType(
-              matchesInstitutionType(currentInst, 'School') ? 'School' : 'College'
-            );
+          if (currentInst) {
+            if (matchesInstitutionType(currentInst, 'School')) {
+              setInstitutionType('School');
+            } else if (matchesInstitutionType(currentInst, 'Others')) {
+              setInstitutionType('Others');
+            } else {
+              setInstitutionType('College');
+            }
           }
         }
 
@@ -120,14 +125,6 @@ export default function EditListingPage() {
     loadData();
   }, [id, user, isAdmin]);
 
-  // Filter institutions
-  let filteredInstitutions = institutions.filter((inst) =>
-    matchesInstitutionType(inst, institutionType)
-  );
-  if (filteredInstitutions.length === 0) {
-    filteredInstitutions = institutions;
-  }
-
   const handleCategoryChange = (newCat) => {
     setCategory(newCat);
     if (
@@ -135,6 +132,8 @@ export default function EditListingPage() {
       newCat === 'Junior College / 11th & 12th'
     ) {
       setInstitutionType('School');
+    } else if (newCat === 'Govt & Competitive Exams') {
+      setInstitutionType('Others');
     } else if (
       newCat === 'Engineering & Tech' ||
       newCat === 'Medical & Health Sciences' ||
@@ -412,76 +411,16 @@ export default function EditListingPage() {
             options={BOOK_CATEGORIES.map((c) => ({ value: c, label: c }))}
           />
 
-          {/* Education Level Switcher */}
-          <div className="form-field">
-            <label className="form-label">
-              Institute Type <span className="form-required">*</span>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setInstitutionType('School');
-                  setInstitutionId('');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'School' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'School' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <School size={16} />
-                <span>School / 1st-12th</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setInstitutionType('College');
-                  setInstitutionId('');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'College' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'College' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <GraduationCap size={16} />
-                <span>College / University</span>
-              </button>
-            </div>
-          </div>
-
-          <Select
-            label={institutionType === 'School' ? 'School / Campus' : 'College / University'}
+          <SearchableInstitutionSelect
+            institutions={institutions}
+            selectedInstitutionId={institutionId}
+            institutionType={institutionType}
+            onTypeChange={(newType) => {
+              setInstitutionType(newType);
+              setInstitutionId('');
+            }}
+            onSelect={(id) => setInstitutionId(id)}
             required
-            value={institutionId}
-            onChange={(e) => setInstitutionId(e.target.value)}
-            options={filteredInstitutions.map((i) => ({
-              value: i.id,
-              label: `${i.name} (${i.area})`,
-            }))}
-            placeholder={`Select ${institutionType.toLowerCase()}...`}
           />
 
           <Input

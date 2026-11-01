@@ -112,13 +112,21 @@ export function matchesInstitutionType(inst, targetType) {
     );
   }
 
-  if (target === 'other') {
+  if (target === 'other' || target === 'others') {
     return (
       rawType === 'other' ||
+      rawType.includes('other') ||
       rawType.includes('coaching') ||
+      rawType.includes('academy') ||
       name.includes('allen') ||
       name.includes('aakash') ||
-      name.includes('coaching')
+      name.includes('coaching') ||
+      name.includes('academy') ||
+      name.includes('vidyapeeth') ||
+      name.includes('physics wallah') ||
+      name.includes('kautilya') ||
+      name.includes('prep') ||
+      name.includes('catalyser')
     );
   }
 

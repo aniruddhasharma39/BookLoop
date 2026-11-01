@@ -6,6 +6,7 @@ import Card from '../components/common/Card';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Alert from '../components/common/Alert';
+import SearchableInstitutionSelect from '../components/common/SearchableInstitutionSelect';
 import { BOOK_CATEGORIES, BOOK_CONDITIONS, rupeesToPaise, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -386,72 +387,25 @@ export default function CreateListingPage() {
             helperText="Selecting a school or college category automatically filters institutes accordingly."
           />
 
-          {/* Institute Level Selector */}
-          <div className="form-field">
-            <label className="form-label">
-              Institute Type <span className="form-required">*</span>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
-              <button
-                type="button"
-                onClick={() => handleTypeChange('School')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'School' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'School' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <School size={16} />
-                <span>School / 1st-12th</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTypeChange('College')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'College' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'College' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <GraduationCap size={16} />
-                <span>College / University</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Dynamic Institution Dropdown (Filtered to Level) */}
-          <Select
-            label={institutionType === 'School' ? 'School / Campus' : 'College / University'}
+          {/* Searchable Institution Selector with School / College / Others */}
+          <SearchableInstitutionSelect
+            institutionType={institutionType}
+            onTypeChange={(newType) => {
+              setInstitutionType(newType);
+              setInstitutionId('');
+            }}
+            institutionId={institutionId}
+            onInstitutionChange={(newId) => setInstitutionId(newId)}
+            institutions={institutions}
             required
-            value={institutionId}
-            onChange={(e) => setInstitutionId(e.target.value)}
-            options={filteredInstitutions.map((i) => ({
-              value: i.id,
-              label: `${i.name} (${i.area})`,
-            }))}
-            placeholder={`Select ${institutionType === 'School' ? 'school' : 'college'} where book is relevant...`}
-            helperText={`Showing ${filteredInstitutions.length} ${institutionType.toLowerCase()}s in your city.`}
+            label={
+              institutionType === 'School'
+                ? 'School / Campus'
+                : institutionType === 'College'
+                  ? 'College / University'
+                  : 'Coaching / Prep Academy'
+            }
+            helperText="Select the campus or academy where this textbook is most relevant."
           />
 
           <Input

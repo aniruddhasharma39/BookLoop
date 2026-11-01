@@ -29,7 +29,8 @@ import Chip from '../components/common/Chip';
 import Alert from '../components/common/Alert';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
-import { formatRupees, getListingImageUrl, validateAndFormatWhatsApp } from '../lib/utils';
+import SearchableInstitutionSelect from '../components/common/SearchableInstitutionSelect';
+import { formatRupees, getListingImageUrl, validateAndFormatWhatsApp, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
@@ -73,6 +74,7 @@ export default function ProfilePage() {
 
   // Profile Form States
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
+  const [institutionType, setInstitutionType] = useState('College'); // 'School' | 'College' | 'Other'
   const [institutionId, setInstitutionId] = useState(profile?.institution_id || '');
   const [course, setCourse] = useState(profile?.course_or_class || '');
   const [gradYear, setGradYear] = useState(profile?.graduation_year?.toString() || '');
@@ -104,6 +106,17 @@ export default function ProfilePage() {
       setCourse(profile.course_or_class || '');
       setGradYear(profile.graduation_year?.toString() || '');
       setWhatsapp(profile.whatsapp_number || '');
+
+      // Detect institution type if assigned
+      if (profile.institutions) {
+        if (matchesInstitutionType(profile.institutions, 'School')) {
+          setInstitutionType('School');
+        } else if (matchesInstitutionType(profile.institutions, 'Other')) {
+          setInstitutionType('Other');
+        } else {
+          setInstitutionType('College');
+        }
+      }
     }
   }, [profile]);
 
@@ -114,13 +127,23 @@ export default function ProfilePage() {
         const data = await fetchCachedInstitutions();
         if (data && data.length > 0) {
           setInstitutions(data);
+
+          // If profile has institutionId, refine detected type from loaded data
+          if (profile?.institution_id) {
+            const found = data.find((i) => i.id === profile.institution_id);
+            if (found) {
+              if (matchesInstitutionType(found, 'School')) setInstitutionType('School');
+              else if (matchesInstitutionType(found, 'Other')) setInstitutionType('Other');
+              else setInstitutionType('College');
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching institutions:', err);
       }
     }
     loadInstitutions();
-  }, []);
+  }, [profile?.institution_id]);
 
   // Check existing account deletion request
   useEffect(() => {
@@ -552,18 +575,24 @@ export default function ProfilePage() {
             helperText="Visible to students on your book listings and interest requests."
           />
 
-          {/* Institution Selection */}
-          <Select
-            label="School / College / Institution *"
-            value={institutionId}
-            onChange={(e) => setInstitutionId(e.target.value)}
-            options={[
-              { value: '', label: 'Select your institution...' },
-              ...institutions.map((inst) => ({
-                value: inst.id,
-                label: `${inst.name}${inst.area ? ` (${inst.area})` : ''}`,
-              })),
-            ]}
+          {/* Searchable Institution Selector with School / College / Others */}
+          <SearchableInstitutionSelect
+            institutionType={institutionType}
+            onTypeChange={(newType) => {
+              setInstitutionType(newType);
+              setInstitutionId('');
+            }}
+            institutionId={institutionId}
+            onInstitutionChange={(newId) => setInstitutionId(newId)}
+            institutions={institutions}
+            required
+            label={
+              institutionType === 'School'
+                ? 'School'
+                : institutionType === 'College'
+                  ? 'College / University'
+                  : 'Coaching / Exam Prep Academy'
+            }
             helperText="Selecting your institution helps campus peers find nearby books."
           />
 

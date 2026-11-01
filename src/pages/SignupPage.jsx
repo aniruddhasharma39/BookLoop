@@ -6,6 +6,7 @@ import Card from '../components/common/Card';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
 import Alert from '../components/common/Alert';
+import SearchableInstitutionSelect from '../components/common/SearchableInstitutionSelect';
 import { INSTITUTION_TYPES, matchesInstitutionType } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -231,72 +232,25 @@ export default function SignupPage() {
             onChange={(e) => setDisplayName(e.target.value)}
           />
 
-          {/* Education Level Selector */}
-          <div className="form-field">
-            <label className="form-label">
-              Education Level <span className="form-required">*</span>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
-              <button
-                type="button"
-                onClick={() => handleTypeChange('School')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'School' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'School' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <School size={16} />
-                <span>School / 1st-12th</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTypeChange('College')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--space-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `2px solid ${institutionType === 'College' ? 'var(--color-primary-navy)' : 'var(--color-border)'}`,
-                  backgroundColor: institutionType === 'College' ? 'var(--color-soft-blue)' : 'var(--color-card-bg)',
-                  color: 'var(--color-primary-navy)',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-xs)',
-                  cursor: 'pointer',
-                  minHeight: '44px',
-                }}
-              >
-                <GraduationCap size={16} />
-                <span>College / University</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Dynamic Institution Dropdown (Filtered to Level) */}
-          <Select
-            label={institutionType === 'School' ? 'Select School' : 'Select College / University'}
+          {/* Searchable Institution Selector with School / College / Others */}
+          <SearchableInstitutionSelect
+            institutionType={institutionType}
+            onTypeChange={(newType) => {
+              setInstitutionType(newType);
+              setInstitutionId('');
+            }}
+            institutionId={institutionId}
+            onInstitutionChange={(newId) => setInstitutionId(newId)}
+            institutions={allInstitutions}
             required
-            value={institutionId}
-            onChange={(e) => setInstitutionId(e.target.value)}
-            options={filteredInstitutions.map((i) => ({
-              value: i.id,
-              label: `${i.name} (${i.area || i.city || 'Indore'})`,
-            }))}
-            placeholder={`Choose your ${institutionType.toLowerCase()}...`}
-            helperText="Selecting your institution helps juniors find nearby books. It is self-selected, not proof of attendance."
+            label={
+              institutionType === 'School'
+                ? 'Select School'
+                : institutionType === 'College'
+                  ? 'Select College / University'
+                  : 'Select Coaching / Exam Prep Academy'
+            }
+            helperText="Selecting your institution helps campus peers find nearby books. It is self-selected, not proof of attendance."
           />
 
           <Input
