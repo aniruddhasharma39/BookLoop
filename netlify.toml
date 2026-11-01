@@ -2,14 +2,6 @@
   publish = "dist"
   command = "npm run build"
 
-# 1. Reverse Proxy for Supabase API (Completely masks the Supabase backend host)
-[[redirects]]
-  from = "/api/supabase/*"
-  to = "https://ofaybxxfymkzceydqfia.supabase.co/:splat"
-  status = 200
-  force = true
-
-# 2. SPA Fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
