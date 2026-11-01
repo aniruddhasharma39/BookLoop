@@ -122,24 +122,27 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // 1. Pending requests on active listings where user is seller
-      const { data: sData } = await supabase
-        .from('interest_requests')
-        .select('id, created_at, listings!inner(status)')
-        .eq('seller_id', targetUserId)
-        .eq('status', 'pending')
-        .eq('listings.status', 'active');
+      // Parallel queries for pending seller & accepted buyer requests
+      const [sRes, bRes] = await Promise.all([
+        supabase
+          .from('interest_requests')
+          .select('id, created_at, listings!inner(status)')
+          .eq('seller_id', targetUserId)
+          .eq('status', 'pending')
+          .eq('listings.status', 'active'),
+        supabase
+          .from('interest_requests')
+          .select('id, created_at, responded_at, listings!inner(status)')
+          .eq('buyer_id', targetUserId)
+          .eq('status', 'accepted')
+          .eq('listings.status', 'active'),
+      ]);
 
-      // 2. Accepted requests on active listings where user is buyer
-      const { data: bData } = await supabase
-        .from('interest_requests')
-        .select('id, created_at, responded_at, listings!inner(status)')
-        .eq('buyer_id', targetUserId)
-        .eq('status', 'accepted')
-        .eq('listings.status', 'active');
+      const sData = sRes.data || [];
+      const bData = bRes.data || [];
 
-      const sellingPending = sData?.length || 0;
-      const buyingAccepted = bData?.length || 0;
+      const sellingPending = sData.length;
+      const buyingAccepted = bData.length;
       const total = sellingPending + buyingAccepted;
 
       setNotificationCounts({

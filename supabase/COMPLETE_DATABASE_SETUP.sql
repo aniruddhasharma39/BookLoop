@@ -149,6 +149,8 @@ WHERE status IN ('pending', 'accepted');
 
 CREATE INDEX IF NOT EXISTS idx_interest_requests_buyer ON public.interest_requests (buyer_id, status);
 CREATE INDEX IF NOT EXISTS idx_interest_requests_seller ON public.interest_requests (seller_id, status);
+CREATE INDEX IF NOT EXISTS idx_interest_requests_buyer_created ON public.interest_requests (buyer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interest_requests_seller_created ON public.interest_requests (seller_id, created_at DESC);
 
 -- 10. REPORTS TABLE
 CREATE TABLE IF NOT EXISTS public.reports (

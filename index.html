@@ -16,36 +16,6 @@
       if (typeof window !== 'undefined' && window.location.hostname.startsWith('www.') && window.location.hostname.endsWith('.vercel.app')) {
         window.location.replace('https://' + window.location.hostname.replace(/^www\./, '') + window.location.pathname + window.location.search);
       }
-
-      // Suppress any Netlify deploy preview or "Powered by Netlify" floating badges
-      (function() {
-        function removeNetlifyBadges() {
-          const selectors = [
-            '#netlify-feedback-badge',
-            '[data-netlify-deploy-preview]',
-            '.netlify-badge',
-            'netlify-drawer',
-            'netlify-drawer-root',
-            'iframe[src*="netlify"]'
-          ];
-          selectors.forEach(function(sel) {
-            document.querySelectorAll(sel).forEach(function(el) { el.remove(); });
-          });
-          document.querySelectorAll('div, a, button').forEach(function(el) {
-            if (el.textContent && el.textContent.trim().toLowerCase() === 'powered by netlify') {
-              el.remove();
-            }
-          });
-        }
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', removeNetlifyBadges);
-        } else {
-          removeNetlifyBadges();
-        }
-        var obs = new MutationObserver(removeNetlifyBadges);
-        obs.observe(document.documentElement, { childList: true, subtree: true });
-        setTimeout(function() { obs.disconnect(); }, 12000);
-      })();
     </script>
   </head>
   <body>

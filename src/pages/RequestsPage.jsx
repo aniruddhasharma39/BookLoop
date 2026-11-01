@@ -23,9 +23,13 @@ import Alert from '../components/common/Alert';
 import EmptyState from '../components/common/EmptyState';
 import LoadingState from '../components/common/LoadingState';
 import Modal from '../components/common/Modal';
+import Pagination from '../components/common/Pagination';
 import { formatRupees, createWhatsAppUrl } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getCache, setCache, removeCache } from '../lib/cache';
+
+const REQUESTS_PAGE_SIZE = 8;
 
 export default function RequestsPage() {
   const { user, profile, notificationCounts, fetchNotificationCounts, markRequestsAsSeen } = useAuth();
@@ -43,6 +47,8 @@ export default function RequestsPage() {
   const [actionLoading, setActionLoading] = useState({});
   const [sellerContacts, setSellerContacts] = useState({}); // { [reqId]: { whatsapp, sellerName, bookTitle } }
   const [feedback, setFeedback] = useState({ type: '', message: '' });
+  const [buyingPage, setBuyingPage] = useState(1);
+  const [sellingPage, setSellingPage] = useState(1);
 
   // Track expanded/collapsed state for grouped listing cards
   const [expandedListings, setExpandedListings] = useState({});
@@ -66,45 +72,89 @@ export default function RequestsPage() {
     return expandedListings[listingId] !== false;
   };
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (forceRefresh = false) => {
     if (!user || !isSupabaseConfigured) {
       setLoading(false);
       return;
     }
 
+    const cacheKey = `requests_${user.id}`;
+    if (!forceRefresh) {
+      const cached = getCache(cacheKey);
+      if (cached) {
+        setBuyingRequests(cached.buying || []);
+        setSellingRequests(cached.selling || []);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+    }
+
     try {
-      setLoading(true);
-
-      // 1. Fetch buying requests
-      const { data: buyingData, error: buyingErr } = await supabase
-        .from('interest_requests')
-        .select(`
-          id,
-          listing_id,
-          status,
-          created_at,
-          responded_at,
-          listings (
+      // Parallel execution cutting query roundtrip in half
+      const [buyingRes, sellingRes] = await Promise.all([
+        supabase
+          .from('interest_requests')
+          .select(`
             id,
-            title,
-            price_paise,
-            condition,
+            listing_id,
             status,
-            institutions (name, area),
-            profiles (id, display_name)
-          )
-        `)
-        .eq('buyer_id', user.id)
-        .order('created_at', { ascending: false });
+            created_at,
+            responded_at,
+            listings (
+              id,
+              title,
+              price_paise,
+              condition,
+              status,
+              institutions (name, area),
+              profiles (id, display_name)
+            )
+          `)
+          .eq('buyer_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('interest_requests')
+          .select(`
+            id,
+            listing_id,
+            status,
+            created_at,
+            responded_at,
+            buyer_id,
+            profiles!interest_requests_buyer_id_fkey (
+              id,
+              display_name,
+              course_or_class,
+              graduation_year,
+              institutions (name, area, city)
+            ),
+            listings (
+              id,
+              title,
+              price_paise,
+              condition,
+              category,
+              status
+            )
+          `)
+          .eq('seller_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (buyingErr) throw buyingErr;
+      if (buyingRes.error) throw buyingRes.error;
+      if (sellingRes.error) throw sellingRes.error;
 
-      // MVP requirement: Only display active requests for ACTIVE listings.
-      // Once removed or marked sold by seller, buying requests stays empty (no past history).
-      const activeBuying = (buyingData || []).filter(
+      const activeBuying = (buyingRes.data || []).filter(
         (req) => req.listings && req.listings.status === 'active' && req.status !== 'closed'
       );
+      const activeSelling = (sellingRes.data || []).filter(
+        (req) => req.listings && req.listings.status === 'active' && req.status !== 'closed'
+      );
+
       setBuyingRequests(activeBuying);
+      setSellingRequests(activeSelling);
+      setCache(cacheKey, { buying: activeBuying, selling: activeSelling }, 30000); // 30s cache
 
       // Clean up cached contacts for any requests that are no longer accepted
       setSellerContacts((prev) => {
@@ -116,43 +166,6 @@ export default function RequestsPage() {
         });
         return updated;
       });
-
-      // 2. Fetch selling requests with rich buyer profile details
-      const { data: sellingData, error: sellingErr } = await supabase
-        .from('interest_requests')
-        .select(`
-          id,
-          listing_id,
-          status,
-          created_at,
-          responded_at,
-          buyer_id,
-          profiles!interest_requests_buyer_id_fkey (
-            id,
-            display_name,
-            course_or_class,
-            graduation_year,
-            institutions (name, area, city)
-          ),
-          listings (
-            id,
-            title,
-            price_paise,
-            condition,
-            category,
-            status
-          )
-        `)
-        .eq('seller_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (sellingErr) throw sellingErr;
-
-      // Only show requests for active listings that are not closed
-      const activeSelling = (sellingData || []).filter(
-        (req) => req.listings && req.listings.status === 'active' && req.status !== 'closed'
-      );
-      setSellingRequests(activeSelling);
 
       // Sync notification counts in header badge
       if (fetchNotificationCounts) {
@@ -189,6 +202,13 @@ export default function RequestsPage() {
     });
     return Array.from(map.values());
   }, [sellingRequests]);
+
+  // Paginated views for performance at scale
+  const totalBuyingPages = Math.ceil(buyingRequests.length / REQUESTS_PAGE_SIZE) || 1;
+  const paginatedBuying = buyingRequests.slice((buyingPage - 1) * REQUESTS_PAGE_SIZE, buyingPage * REQUESTS_PAGE_SIZE);
+
+  const totalSellingPages = Math.ceil(groupedSelling.length / REQUESTS_PAGE_SIZE) || 1;
+  const paginatedSelling = groupedSelling.slice((sellingPage - 1) * REQUESTS_PAGE_SIZE, sellingPage * REQUESTS_PAGE_SIZE);
 
   // Handle click on "Accept Request" button
   const handleInitiateAccept = (targetReq) => {
@@ -239,7 +259,8 @@ export default function RequestsPage() {
         message: 'Request accepted! The buyer can now access your WhatsApp number to coordinate campus handover.',
       });
       setSwitchModal({ isOpen: false, targetReq: null, currentAcceptedReq: null });
-      await fetchRequests();
+      removeCache(`requests_${user.id}`);
+      await fetchRequests(true);
     } catch (err) {
       console.error('Accept error:', err);
       const isWhatsAppErr = err.message?.toLowerCase().includes('whatsapp');
@@ -279,7 +300,8 @@ export default function RequestsPage() {
         type: 'info',
         message: 'Acceptance revoked. Your WhatsApp contact is now protected and you can select another student.',
       });
-      await fetchRequests();
+      removeCache(`requests_${user.id}`);
+      await fetchRequests(true);
     } catch (err) {
       console.error('Revoke error:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to revoke acceptance.' });
@@ -303,7 +325,8 @@ export default function RequestsPage() {
       }
 
       setFeedback({ type: 'info', message: 'Interest request declined.' });
-      await fetchRequests();
+      removeCache(`requests_${user.id}`);
+      await fetchRequests(true);
     } catch (err) {
       console.error('Decline error:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to decline request.' });
@@ -378,7 +401,10 @@ export default function RequestsPage() {
       <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', gap: 'var(--space-2)' }}>
         <button
           type="button"
-          onClick={() => setActiveTab('buying')}
+          onClick={() => {
+            setActiveTab('buying');
+            setBuyingPage(1);
+          }}
           style={{
             padding: 'var(--space-3) var(--space-4)',
             border: 'none',
@@ -394,7 +420,10 @@ export default function RequestsPage() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('selling')}
+          onClick={() => {
+            setActiveTab('selling');
+            setSellingPage(1);
+          }}
           style={{
             padding: 'var(--space-3) var(--space-4)',
             border: 'none',
@@ -416,7 +445,7 @@ export default function RequestsPage() {
         // Tab: Buying Requests (Filtered strictly for active listings; empty once removed/sold)
         buyingRequests.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            {buyingRequests.map((req) => {
+            {paginatedBuying.map((req) => {
               const contactInfo = sellerContacts[req.id];
               const listing = req.listings;
 
@@ -494,6 +523,17 @@ export default function RequestsPage() {
                 </Card>
               );
             })}
+
+            {buyingRequests.length > 0 && (
+              <Pagination
+                currentPage={buyingPage}
+                totalPages={totalBuyingPages}
+                totalItems={buyingRequests.length}
+                pageSize={REQUESTS_PAGE_SIZE}
+                onPageChange={setBuyingPage}
+                itemName="buying requests"
+              />
+            )}
           </div>
         ) : (
           <EmptyState
@@ -520,7 +560,8 @@ export default function RequestsPage() {
           )}
 
           {groupedSelling.length > 0 ? (
-            groupedSelling.map((group) => {
+            <>
+              {paginatedSelling.map((group) => {
               const isExpanded = isListingExpanded(group.listingId);
               const acceptedBuyerReq = group.requests.find((r) => r.status === 'accepted');
 
@@ -791,8 +832,20 @@ export default function RequestsPage() {
                   )}
                 </Card>
               );
-            })
-          ) : (
+            })}
+
+            {groupedSelling.length > 0 && (
+              <Pagination
+                currentPage={sellingPage}
+                totalPages={totalSellingPages}
+                totalItems={groupedSelling.length}
+                pageSize={REQUESTS_PAGE_SIZE}
+                onPageChange={setSellingPage}
+                itemName="listings with requests"
+              />
+            )}
+          </>
+        ) : (
             <EmptyState
               title="No Selling Requests"
               description="No active requests for your books right now."
