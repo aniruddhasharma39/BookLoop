@@ -98,7 +98,7 @@ export default function PrivacyPage() {
           <ul style={{ paddingLeft: 'var(--space-5)', marginTop: 'var(--space-2)', fontSize: 'var(--font-size-sm)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <li>Students under 18 years of age must register and use the service with the verifiable knowledge and consent of a parent or legal guardian.</li>
             <li>Parents and guardians are encouraged to accompany minors during book exchanges or supervise the public school meetup.</li>
-            <li>Parents may contact <a href="mailto:support@bookloop.in" style={{ fontWeight: 600 }}>support@bookloop.in</a> at any time to inspect, modify, or request deletion of a minor's profile data.</li>
+            <li>Parents may contact <a href="mailto:support.urbancloud@gmail.com" style={{ fontWeight: 600 }}>support.urbancloud@gmail.com</a> at any time to inspect, modify, or request deletion of a minor's profile data.</li>
           </ul>
         </div>
 
@@ -125,10 +125,10 @@ export default function PrivacyPage() {
           </p>
           <p style={{ marginTop: 'var(--space-2)' }}>
             <a
-              href="mailto:support@bookloop.in"
+              href="mailto:support.urbancloud@gmail.com"
               style={{ fontWeight: 700, fontSize: 'var(--font-size-base)', color: 'var(--color-primary-navy)' }}
             >
-              support@bookloop.in
+              support.urbancloud@gmail.com
             </a>
           </p>
         </div>

@@ -279,8 +279,8 @@ export default function CreateListingPage() {
       {profile?.account_status === 'suspended' && (
         <Alert variant="error" title="Account Suspended">
           Your account is currently suspended due to safety or moderation actions. You cannot publish new book listings. If you believe this is in error, contact{' '}
-          <a href="mailto:support@bookloop.in" style={{ fontWeight: 600, textDecoration: 'underline' }}>
-            support@bookloop.in
+          <a href="mailto:support.urbancloud@gmail.com" style={{ fontWeight: 600, textDecoration: 'underline' }}>
+            support.urbancloud@gmail.com
           </a>.
         </Alert>
       )}

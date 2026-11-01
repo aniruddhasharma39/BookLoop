@@ -83,30 +83,27 @@ export default function Footer() {
               <Mail size={14} color="var(--color-primary-navy)" />
               <span style={{ color: 'var(--color-text-muted)' }}>Contact Admin:</span>
               <a
-                href="mailto:support@bookloop.in"
+                href="mailto:support.urbancloud@gmail.com"
                 style={{ color: 'var(--color-primary-navy)', fontWeight: 600, textDecoration: 'none' }}
               >
-                support@bookloop.in
+                support.urbancloud@gmail.com
               </a>
             </div>
           </div>
         </div>
 
-        {/* Bottom copyright / disclaimer */}
+        {/* Bottom bar */}
         <div
           style={{
             borderTop: '1px solid var(--color-border-subtle)',
             paddingTop: 'var(--space-4)',
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 'var(--space-2)',
             fontSize: 'var(--font-size-xs)',
             color: 'var(--color-text-muted)',
           }}
         >
-          <span>&copy; {new Date().getFullYear()} BookLoop. All rights reserved. Peer-to-peer campus exchange.</span>
           <span>Knowledge Continuity &bull; Paper Saved &bull; Fair Campus Exchange</span>
         </div>
       </div>

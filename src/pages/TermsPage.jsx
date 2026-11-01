@@ -89,7 +89,7 @@ export default function TermsPage() {
           </h2>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-main)', marginTop: 'var(--space-1)' }}>
             To report an infringement or dispute a moderation action, contact our administrative team at{' '}
-            <a href="mailto:support@bookloop.in" style={{ fontWeight: 600 }}>support@bookloop.in</a>.
+            <a href="mailto:support.urbancloud@gmail.com" style={{ fontWeight: 600 }}>support.urbancloud@gmail.com</a>.
           </p>
         </div>
       </Card>

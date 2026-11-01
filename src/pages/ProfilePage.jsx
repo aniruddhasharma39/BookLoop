@@ -438,10 +438,10 @@ export default function ProfilePage() {
         <Alert variant="error" title="Account Suspended by Moderation">
           Your account is currently suspended due to safety or moderation policies. You cannot publish new listings or send interest requests. If you believe this is in error or wish to appeal, please contact the administrator at{' '}
           <a
-            href="mailto:support@bookloop.in"
+            href="mailto:support.urbancloud@gmail.com"
             style={{ color: 'inherit', fontWeight: 700, textDecoration: 'underline' }}
           >
-            support@bookloop.in
+            support.urbancloud@gmail.com
           </a>.
         </Alert>
       )}
@@ -880,7 +880,7 @@ export default function ProfilePage() {
             Have a dispute, moderation question, or campus inquiry?
           </span>
           <a
-            href="mailto:support@bookloop.in"
+            href="mailto:support.urbancloud@gmail.com"
             style={{
               fontSize: 'var(--font-size-xs)',
               color: 'var(--color-primary-navy)',
@@ -892,7 +892,7 @@ export default function ProfilePage() {
             }}
           >
             <Mail size={14} />
-            <span>Contact Administrator (support@bookloop.in)</span>
+            <span>Contact Administrator (support.urbancloud@gmail.com)</span>
           </a>
         </div>
       </Card>

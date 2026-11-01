@@ -201,8 +201,8 @@ export default function ListingDetailPage() {
       {profile?.account_status === 'suspended' && (
         <Alert variant="error" title="Account Suspended">
           Your account is suspended. You cannot submit interest requests. For questions or appeals, contact{' '}
-          <a href="mailto:support@bookloop.in" style={{ fontWeight: 600, textDecoration: 'underline' }}>
-            support@bookloop.in
+          <a href="mailto:support.urbancloud@gmail.com" style={{ fontWeight: 600, textDecoration: 'underline' }}>
+            support.urbancloud@gmail.com
           </a>.
         </Alert>
       )}

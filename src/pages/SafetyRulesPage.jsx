@@ -119,7 +119,7 @@ export default function SafetyRulesPage() {
 
         <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
           <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
-            See a violation or need support? Use the <strong>"Report listing"</strong> button on any book or contact the administrator at <a href="mailto:support@bookloop.in" style={{ fontWeight: 600 }}>support@bookloop.in</a>.
+            See a violation or need support? Use the <strong>"Report listing"</strong> button on any book or contact the administrator at <a href="mailto:support.urbancloud@gmail.com" style={{ fontWeight: 600 }}>support.urbancloud@gmail.com</a>.
           </p>
         </div>
       </Card>
