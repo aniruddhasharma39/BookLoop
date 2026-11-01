@@ -239,7 +239,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_sync_profile_whatsapp ON public.profiles;
 CREATE TRIGGER trg_sync_profile_whatsapp
-AFTER INSERT OR UPDATE OF whatsapp_number ON public.profiles
+AFTER INSERT OR UPDATE ON public.profiles
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_profile_whatsapp_to_private();
 
