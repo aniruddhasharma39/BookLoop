@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LogIn, BookMarked, Eye, EyeOff, KeyRound, Mail, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { LogIn, BookMarked, Eye, EyeOff, KeyRound, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Input from '../components/common/Input';
@@ -22,7 +22,10 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
+
+  // 4-Digit OTP States
+  const [digits, setDigits] = useState(['', '', '', '']);
+  const digitRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   
   // New password states (post-OTP recovery)
   const [newPassword, setNewPassword] = useState('');
@@ -38,6 +41,15 @@ export default function LoginPage() {
   // Rate-limiting / Countdown timer
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
+  // Auto-focus first digit input when entering verify mode
+  useEffect(() => {
+    if (authMode === 'otp_verify') {
+      setTimeout(() => {
+        digitRefs[0].current?.focus();
+      }, 100);
+    }
+  }, [authMode]);
+
   // Handle countdown interval
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
@@ -52,6 +64,46 @@ export default function LoginPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldownSeconds]);
+
+  // 4-Digit input helpers
+  const handleDigitChange = (index, value) => {
+    const cleanVal = value.replace(/[^0-9]/g, '');
+    if (!cleanVal) {
+      const next = [...digits];
+      next[index] = '';
+      setDigits(next);
+      return;
+    }
+
+    const digit = cleanVal.slice(-1);
+    const next = [...digits];
+    next[index] = digit;
+    setDigits(next);
+
+    // Auto-focus next input
+    if (index < 3) {
+      digitRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      digitRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleDigitPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 4);
+    if (!pasted) return;
+    const next = ['', '', '', ''];
+    for (let i = 0; i < pasted.length; i++) {
+      next[i] = pasted[i];
+    }
+    setDigits(next);
+    const focusIdx = Math.min(pasted.length, 3);
+    digitRefs[focusIdx].current?.focus();
+  };
 
   // Standard Password Login
   const handlePasswordLogin = async (e) => {
@@ -106,7 +158,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithOtp({ email: email.trim() });
-      setSuccessMessage(`We've sent a one-time verification code to ${email.trim()}.`);
+      setDigits(['', '', '', '']);
+      setSuccessMessage(`We've sent a 4-digit verification code to ${email.trim()}.`);
       setAuthMode('otp_verify');
       setCooldownSeconds(60); // standard 60-second cooldown
     } catch (err) {
@@ -119,25 +172,25 @@ export default function LoginPage() {
 
   // Step 2 of OTP: Verify Code
   const handleVerifyOtp = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    const trimmedCode = otpCode.trim();
-    if (!trimmedCode) {
-      setErrorMessage('Please enter the OTP code sent to your email.');
+    const fullCode = digits.join('');
+    if (fullCode.length !== 4) {
+      setErrorMessage('Please enter the complete 4-digit code.');
       return;
     }
 
     setLoading(true);
     try {
-      await verifyOtp({ email: email.trim(), token: trimmedCode });
+      await verifyOtp({ email: email.trim(), token: fullCode });
       setSuccessMessage('Verification successful! You are now logged in.');
       // Give option to set a new password, or proceed
       setAuthMode('set_new_password');
     } catch (err) {
       console.error('OTP Verify error:', err);
-      setErrorMessage(err.message || 'Invalid or expired OTP. Please verify and try again.');
+      setErrorMessage(err.message || 'Invalid or expired 4-digit code. Please verify and try again.');
     } finally {
       setLoading(false);
     }
@@ -195,15 +248,15 @@ export default function LoginPage() {
 
         <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-primary-navy)' }}>
           {authMode === 'password' && 'Welcome back'}
-          {authMode === 'otp_request' && 'Passwordless & Recovery'}
-          {authMode === 'otp_verify' && 'Enter Verification Code'}
+          {authMode === 'otp_request' && 'Sign in with OTP'}
+          {authMode === 'otp_verify' && 'Enter 4-Digit Code'}
           {authMode === 'set_new_password' && 'Set New Password'}
         </h1>
 
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
           {authMode === 'password' && 'Sign in to manage your textbook listings and requests'}
-          {authMode === 'otp_request' && 'Login with a secure one-time code sent to your email'}
-          {authMode === 'otp_verify' && `We sent a code to ${email}`}
+          {authMode === 'otp_request' && "We'll send a 4-digit verification code to your email"}
+          {authMode === 'otp_verify' && `Enter the 4-digit code sent to ${email}`}
           {authMode === 'set_new_password' && 'You can now set a new password, or skip to continue'}
         </p>
       </div>
@@ -320,29 +373,12 @@ export default function LoginPage() {
         )}
 
         {/* ============================================================== */}
-        {/* MODE 2: REQUEST OTP (FORGOT PASSWORD / PASSWORDLESS)          */}
+        {/* MODE 2: REQUEST OTP (FORGOT PASSWORD / OTP LOGIN)              */}
         {/* ============================================================== */}
         {authMode === 'otp_request' && (
           <form onSubmit={handleRequestOtp} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 12px',
-              backgroundColor: '#F8FAFC',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border)',
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-muted)'
-            }}>
-              <ShieldCheck size={18} style={{ color: 'var(--color-accent-teal)', flexShrink: 0 }} />
-              <span>
-                <strong>Anti-Abuse Protection:</strong> OTP codes are delivered strictly to verified registered accounts.
-              </span>
-            </div>
-
             <Input
-              label="Registered Student Email"
+              label="Student Email"
               type="email"
               required
               autoFocus
@@ -432,25 +468,51 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Input
-                label="Enter One-Time Password (OTP)"
-                type="text"
-                required
-                autoFocus
-                autoComplete="one-time-code"
-                placeholder="Enter 4 to 8 digit code"
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9a-zA-Z]/g, ''))}
-                maxLength={8}
-                style={{
-                  letterSpacing: '4px',
-                  fontSize: 'var(--font-size-xl)',
-                  textAlign: 'center',
-                  fontWeight: 700
+              <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: 'var(--space-2)', textAlign: 'center' }}>
+                Enter 4-Digit Verification Code
+              </label>
+
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: '12px',
+                  margin: 'var(--space-3) 0'
                 }}
-              />
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', marginTop: '4px' }}>
-                Check your inbox and spam folder for the one-time code from BookLoop.
+                onPaste={handleDigitPaste}
+              >
+                {[0, 1, 2, 3].map((idx) => (
+                  <input
+                    key={idx}
+                    ref={digitRefs[idx]}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete={idx === 0 ? 'one-time-code' : 'off'}
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={digits[idx]}
+                    onChange={(e) => handleDigitChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                    style={{
+                      width: '56px',
+                      height: '62px',
+                      textAlign: 'center',
+                      fontSize: '28px',
+                      fontWeight: 700,
+                      color: 'var(--color-primary-navy)',
+                      backgroundColor: 'var(--color-surface)',
+                      border: digits[idx] ? '2px solid var(--color-primary-navy)' : '1.5px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)',
+                      outline: 'none',
+                      boxShadow: digits[idx] ? '0 0 0 3px rgba(30, 58, 138, 0.12)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  />
+                ))}
+              </div>
+
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', textAlign: 'center' }}>
+                Type the 4-digit code shown in your email from BookLoop.
               </span>
             </div>
 
