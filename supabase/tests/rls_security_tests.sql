@@ -36,15 +36,22 @@ BEGIN
     END IF;
 
     -- Create test profiles
-    INSERT INTO public.profiles (id, display_name, institution_id, whatsapp_number, account_status)
+    INSERT INTO public.profiles (id, display_name, institution_id, account_status)
     VALUES 
-        (c_seller_id, 'Seller Student', v_inst_id, '+919876543210', 'active'),
-        (c_buyer_id,  'Buyer Junior',   v_inst_id, '+919123456789', 'active'),
-        (c_hacker_id, 'Hacker/Stranger',v_inst_id, NULL,           'active'),
-        (c_admin_id,  'Admin Staff',    v_inst_id, NULL,           'active')
+        (c_seller_id, 'Seller Student', v_inst_id, 'active'),
+        (c_buyer_id,  'Buyer Junior',   v_inst_id, 'active'),
+        (c_hacker_id, 'Hacker/Stranger',v_inst_id, 'active'),
+        (c_admin_id,  'Admin Staff',    v_inst_id, 'active')
     ON CONFLICT (id) DO UPDATE SET 
-        whatsapp_number = EXCLUDED.whatsapp_number,
         account_status = EXCLUDED.account_status;
+
+    -- Directly configure private contacts in user_contacts
+    INSERT INTO public.user_contacts (user_id, whatsapp_number)
+    VALUES 
+        (c_seller_id, '+919876543210'),
+        (c_buyer_id,  '+919123456789')
+    ON CONFLICT (user_id) DO UPDATE SET 
+        whatsapp_number = EXCLUDED.whatsapp_number;
 
     -- Assign admin role
     INSERT INTO public.admin_roles (user_id, role)

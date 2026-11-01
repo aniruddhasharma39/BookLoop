@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_status ON public.profiles (account_statu
 
 -- 4. PRIVATE USER CONTACTS TABLE (STRICT PRIVACY FOR WHATSAPP)
 CREATE TABLE IF NOT EXISTS public.user_contacts (
-    user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+    user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     whatsapp_number TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
@@ -227,7 +227,11 @@ BEGIN
         ON CONFLICT (user_id) DO UPDATE 
         SET whatsapp_number = EXCLUDED.whatsapp_number,
             updated_at = timezone('utc'::text, now());
-        NEW.whatsapp_number := NULL;
+
+        -- Clear the plaintext column from profiles so it is never exposed in queries
+        UPDATE public.profiles
+        SET whatsapp_number = NULL
+        WHERE id = NEW.id AND whatsapp_number IS NOT NULL;
     END IF;
     RETURN NEW;
 END;
@@ -235,7 +239,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_sync_profile_whatsapp ON public.profiles;
 CREATE TRIGGER trg_sync_profile_whatsapp
-BEFORE INSERT OR UPDATE OF whatsapp_number ON public.profiles
+AFTER INSERT OR UPDATE OF whatsapp_number ON public.profiles
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_profile_whatsapp_to_private();
 
@@ -897,3 +901,4 @@ ON CONFLICT (version) DO NOTHING;
 
 -- Reload Supabase PostgREST schema cache
 NOTIFY pgrst, 'reload schema';
+

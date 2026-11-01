@@ -85,7 +85,7 @@ EXECUTE FUNCTION public.guard_interest_request_updates();
 -- 3. FIX ISSUE 2: MOVE WHATSAPP CONTACT NUMBERS TO PRIVATE TABLE
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.user_contacts (
-    user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+    user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     whatsapp_number TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
@@ -132,8 +132,11 @@ BEGIN
         ON CONFLICT (user_id) DO UPDATE 
         SET whatsapp_number = EXCLUDED.whatsapp_number,
             updated_at = timezone('utc'::text, now());
+
         -- Always keep profiles.whatsapp_number clean/null for privacy
-        NEW.whatsapp_number := NULL;
+        UPDATE public.profiles
+        SET whatsapp_number = NULL
+        WHERE id = NEW.id AND whatsapp_number IS NOT NULL;
     END IF;
     RETURN NEW;
 END;
@@ -141,7 +144,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_sync_profile_whatsapp ON public.profiles;
 CREATE TRIGGER trg_sync_profile_whatsapp
-BEFORE INSERT OR UPDATE OF whatsapp_number ON public.profiles
+AFTER INSERT OR UPDATE OF whatsapp_number ON public.profiles
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_profile_whatsapp_to_private();
 
