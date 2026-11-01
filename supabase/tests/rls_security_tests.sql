@@ -35,7 +35,16 @@ BEGIN
         RETURNING id INTO v_inst_id;
     END IF;
 
-    -- Create test profiles
+    -- Create test users in auth.users (satisfies foreign key constraint; rolls back at end)
+    INSERT INTO auth.users (id, instance_id, aud, role, email, created_at, updated_at)
+    VALUES 
+        (c_seller_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seller_test@bookloop.local', now(), now()),
+        (c_buyer_id,  '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'buyer_test@bookloop.local', now(), now()),
+        (c_hacker_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'hacker_test@bookloop.local', now(), now()),
+        (c_admin_id,  '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin_test@bookloop.local', now(), now())
+    ON CONFLICT (id) DO NOTHING;
+
+    -- Create or update test profiles
     INSERT INTO public.profiles (id, display_name, institution_id, account_status)
     VALUES 
         (c_seller_id, 'Seller Student', v_inst_id, 'active'),
@@ -43,6 +52,8 @@ BEGIN
         (c_hacker_id, 'Hacker/Stranger',v_inst_id, 'active'),
         (c_admin_id,  'Admin Staff',    v_inst_id, 'active')
     ON CONFLICT (id) DO UPDATE SET 
+        display_name = EXCLUDED.display_name,
+        institution_id = EXCLUDED.institution_id,
         account_status = EXCLUDED.account_status;
 
     -- Directly configure private contacts in user_contacts
