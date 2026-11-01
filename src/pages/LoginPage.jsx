@@ -23,9 +23,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // 4-Digit OTP States
-  const [digits, setDigits] = useState(['', '', '', '']);
-  const digitRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  // 6-Digit OTP States
+  const [digits, setDigits] = useState(['', '', '', '', '', '']);
+  const digitRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
   
   // New password states (post-OTP recovery)
   const [newPassword, setNewPassword] = useState('');
@@ -65,7 +65,7 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [cooldownSeconds]);
 
-  // 4-Digit input helpers
+  // 6-Digit input helpers
   const handleDigitChange = (index, value) => {
     const cleanVal = value.replace(/[^0-9]/g, '');
     if (!cleanVal) {
@@ -81,7 +81,7 @@ export default function LoginPage() {
     setDigits(next);
 
     // Auto-focus next input
-    if (index < 3) {
+    if (index < 5) {
       digitRefs[index + 1].current?.focus();
     }
   };
@@ -94,14 +94,14 @@ export default function LoginPage() {
 
   const handleDigitPaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 4);
+    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
     if (!pasted) return;
-    const next = ['', '', '', ''];
+    const next = ['', '', '', '', '', ''];
     for (let i = 0; i < pasted.length; i++) {
       next[i] = pasted[i];
     }
     setDigits(next);
-    const focusIdx = Math.min(pasted.length, 3);
+    const focusIdx = Math.min(pasted.length, 5);
     digitRefs[focusIdx].current?.focus();
   };
 
@@ -158,8 +158,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithOtp({ email: email.trim() });
-      setDigits(['', '', '', '']);
-      setSuccessMessage(`We've sent a 4-digit verification code to ${email.trim()}.`);
+      setDigits(['', '', '', '', '', '']);
+      setSuccessMessage(`We've sent a 6-digit verification code to ${email.trim()}.`);
       setAuthMode('otp_verify');
       setCooldownSeconds(60); // standard 60-second cooldown
     } catch (err) {
@@ -177,8 +177,8 @@ export default function LoginPage() {
     setSuccessMessage('');
 
     const fullCode = digits.join('');
-    if (fullCode.length !== 4) {
-      setErrorMessage('Please enter the complete 4-digit code.');
+    if (fullCode.length !== 6) {
+      setErrorMessage('Please enter the complete 6-digit code.');
       return;
     }
 
@@ -190,7 +190,7 @@ export default function LoginPage() {
       setAuthMode('set_new_password');
     } catch (err) {
       console.error('OTP Verify error:', err);
-      setErrorMessage(err.message || 'Invalid or expired 4-digit code. Please verify and try again.');
+      setErrorMessage(err.message || 'Invalid or expired 6-digit code. Please verify and try again.');
     } finally {
       setLoading(false);
     }
@@ -249,14 +249,14 @@ export default function LoginPage() {
         <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-primary-navy)' }}>
           {authMode === 'password' && 'Welcome back'}
           {authMode === 'otp_request' && 'Sign in with OTP'}
-          {authMode === 'otp_verify' && 'Enter 4-Digit Code'}
+          {authMode === 'otp_verify' && 'Enter 6-Digit Code'}
           {authMode === 'set_new_password' && 'Set New Password'}
         </h1>
 
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
           {authMode === 'password' && 'Sign in to manage your textbook listings and requests'}
-          {authMode === 'otp_request' && "We'll send a 4-digit verification code to your email"}
-          {authMode === 'otp_verify' && `Enter the 4-digit code sent to ${email}`}
+          {authMode === 'otp_request' && "We'll send a 6-digit verification code to your email"}
+          {authMode === 'otp_verify' && `Enter the 6-digit code sent to ${email}`}
           {authMode === 'set_new_password' && 'You can now set a new password, or skip to continue'}
         </p>
       </div>
@@ -469,19 +469,19 @@ export default function LoginPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: 'var(--space-2)', textAlign: 'center' }}>
-                Enter 4-Digit Verification Code
+                Enter 6-Digit Verification Code
               </label>
 
               <div 
                 style={{ 
                   display: 'flex', 
                   justifyContent: 'center', 
-                  gap: '12px',
+                  gap: '8px',
                   margin: 'var(--space-3) 0'
                 }}
                 onPaste={handleDigitPaste}
               >
-                {[0, 1, 2, 3].map((idx) => (
+                {[0, 1, 2, 3, 4, 5].map((idx) => (
                   <input
                     key={idx}
                     ref={digitRefs[idx]}
@@ -494,10 +494,10 @@ export default function LoginPage() {
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleDigitKeyDown(idx, e)}
                     style={{
-                      width: '56px',
-                      height: '62px',
+                      width: '46px',
+                      height: '56px',
                       textAlign: 'center',
-                      fontSize: '28px',
+                      fontSize: '24px',
                       fontWeight: 700,
                       color: 'var(--color-primary-navy)',
                       backgroundColor: 'var(--color-surface)',
@@ -512,7 +512,7 @@ export default function LoginPage() {
               </div>
 
               <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', textAlign: 'center' }}>
-                Type the 4-digit code shown in your email from BookLoop.
+                Type the 6-digit code shown in your email from BookLoop.
               </span>
             </div>
 
