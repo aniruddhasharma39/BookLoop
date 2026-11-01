@@ -187,14 +187,17 @@ BEGIN
     -- -------------------------------------------------------------
     -- TEST 7: Mark Sold closes other pending requests
     -- -------------------------------------------------------------
-    -- Insert another pending request from hacker
-    PERFORM set_config('request.jwt.claim.sub', c_seller_id::text, true);
+    -- Buyer (c_hacker_id) sends interest request for the listing
+    PERFORM set_config('request.jwt.claim.sub', c_hacker_id::text, true);
     PERFORM set_config('role', 'authenticated', true);
 
     INSERT INTO public.interest_requests (id, listing_id, buyer_id, seller_id, status)
     VALUES (gen_random_uuid(), v_listing_id, c_hacker_id, c_seller_id, 'pending');
 
     -- Seller marks listing as sold
+    PERFORM set_config('request.jwt.claim.sub', c_seller_id::text, true);
+    PERFORM set_config('role', 'authenticated', true);
+
     PERFORM public.mark_listing_sold(v_listing_id);
 
     SELECT count(*) INTO v_count
