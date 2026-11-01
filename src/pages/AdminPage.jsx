@@ -223,7 +223,13 @@ export default function AdminPage() {
       fetchData();
     } catch (err) {
       console.error('Report update error:', err);
-      setFeedback({ type: 'error', message: err.message || 'Failed to update report status.' });
+      const isMissingRpc = err.message?.includes('schema cache') || err.code === 'PGRST202' || err.code === '404';
+      setFeedback({ 
+        type: 'error', 
+        message: isMissingRpc 
+          ? 'Database function admin_update_report_status is missing. Please run supabase/COMPLETE_DATABASE_SETUP.sql in your Supabase SQL Editor.'
+          : (err.message || 'Failed to update report status.') 
+      });
     } finally {
       setActionLoading(false);
     }
