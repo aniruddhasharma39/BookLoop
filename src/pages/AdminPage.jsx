@@ -47,6 +47,58 @@ import { useAuth } from '../context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchCachedInstitutions, invalidateCachePattern } from '../lib/cache';
 
+const INDORE_INSTITUTIONS_SEED = [
+  // Engineering Colleges (Indore)
+  { name: 'Acropolis Institute of Technology & Research (AITR)', institution_type: 'College', city: 'Indore', area: 'Bypass Road, Manglia', is_active: true },
+  { name: 'Shri Govindram Seksaria Institute of Technology and Science (SGSITS)', institution_type: 'College', city: 'Indore', area: 'Vallabh Nagar', is_active: true },
+  { name: 'Institute of Engineering & Technology, DAVV (IET DAVV)', institution_type: 'College', city: 'Indore', area: 'Khandwa Road', is_active: true },
+  { name: 'IPS Academy, Institute of Engineering & Science', institution_type: 'College', city: 'Indore', area: 'Rajendra Nagar', is_active: true },
+  { name: 'Medi-Caps University (Faculty of Engineering)', institution_type: 'College', city: 'Indore', area: 'A.B. Road, Pigdamber', is_active: true },
+  { name: 'Oriental Institute of Science and Technology (OIST)', institution_type: 'College', city: 'Indore', area: 'Sanwer Road', is_active: true },
+  { name: "SVKM's NMIMS MPSTME (Indore Campus)", institution_type: 'College', city: 'Indore', area: 'Super Corridor', is_active: true },
+  { name: 'Indian Institute of Technology Indore (IIT Indore)', institution_type: 'College', city: 'Indore', area: 'Simrol', is_active: true },
+
+  // Medical & Health Sciences (Indore)
+  { name: 'Mahatma Gandhi Memorial Medical College (MGM Medical College)', institution_type: 'College', city: 'Indore', area: 'A.B. Road', is_active: true },
+  { name: 'Sri Aurobindo Institute of Medical Sciences (SAIMS)', institution_type: 'College', city: 'Indore', area: 'Sanwer Road', is_active: true },
+  { name: 'Index Medical College Hospital & Research Centre', institution_type: 'College', city: 'Indore', area: 'Nemawar Road', is_active: true },
+  { name: 'Government College of Dentistry (GDC Indore)', institution_type: 'College', city: 'Indore', area: 'Sardar Patel Marg', is_active: true },
+  { name: 'Choithram College of Nursing & Health Sciences', institution_type: 'College', city: 'Indore', area: 'Manik Bagh Road', is_active: true },
+
+  // Pharmacy Colleges (Indore)
+  { name: 'Department of Pharmacy, SGSITS', institution_type: 'College', city: 'Indore', area: 'Vallabh Nagar', is_active: true },
+  { name: 'Acropolis Institute of Pharmaceutical Education and Research (AIPER)', institution_type: 'College', city: 'Indore', area: 'Manglia', is_active: true },
+  { name: 'Modern Institute of Pharmaceutical Sciences', institution_type: 'College', city: 'Indore', area: 'Alwasa, Sanwer Road', is_active: true },
+  { name: 'Indore Institute of Pharmacy (IIP)', institution_type: 'College', city: 'Indore', area: 'Rau-Pithampur Bypass Road', is_active: true },
+  { name: 'Smriti College of Pharmaceutical Education (SCOPE)', institution_type: 'College', city: 'Indore', area: 'MR-11, Pipliya Kumar', is_active: true },
+
+  // Commerce, Business and Management (Indore)
+  { name: 'Institute of Management Studies, DAVV (IMS DAVV)', institution_type: 'College', city: 'Indore', area: 'Khandwa Road', is_active: true },
+  { name: 'Prestige Institute of Management and Research (PIMR)', institution_type: 'College', city: 'Indore', area: 'Scheme 54, Vijay Nagar', is_active: true },
+  { name: 'Jaipuria Institute of Management', institution_type: 'College', city: 'Indore', area: 'Indore-Dewas Highway', is_active: true },
+  { name: 'Daly College Business School (DCBS)', institution_type: 'College', city: 'Indore', area: 'Residency Area', is_active: true },
+  { name: 'Renaissance College of Commerce and Management', institution_type: 'College', city: 'Indore', area: 'Bypass Road', is_active: true },
+  { name: 'Shri Vaishnav Institute of Management (SVIM)', institution_type: 'College', city: 'Indore', area: 'Gumasta Nagar', is_active: true },
+  { name: 'Indian Institute of Management Indore (IIM Indore)', institution_type: 'College', city: 'Indore', area: 'Prabandh Shikhar, Rau', is_active: true },
+
+  // Schools & Junior Colleges (Indore)
+  { name: 'The Daly College', institution_type: 'School', city: 'Indore', area: 'Residency Area', is_active: true },
+  { name: 'Delhi Public School (DPS Indore)', institution_type: 'School', city: 'Indore', area: 'Nipania, Bypass Road', is_active: true },
+  { name: 'Choithram School', institution_type: 'School', city: 'Indore', area: 'Manik Bagh Road', is_active: true },
+  { name: 'The Emerald Heights International School', institution_type: 'School', city: 'Indore', area: 'A.B. Road, Rau', is_active: true },
+  { name: 'The Shishukunj International School', institution_type: 'School', city: 'Indore', area: 'Jhalaria, Bypass Road', is_active: true },
+  { name: "St. Raphael's Higher Secondary School", institution_type: 'School', city: 'Indore', area: '15 Old Palasia', is_active: true },
+  { name: 'Advanced Academy', institution_type: 'School', city: 'Indore', area: 'Nipania', is_active: true },
+  { name: 'Sri Sathya Sai Vidya Vihar', institution_type: 'School', city: 'Indore', area: 'Scheme 54, Vijay Nagar', is_active: true },
+  { name: 'St. Paul Higher Secondary School', institution_type: 'School', city: 'Indore', area: 'Boundary Road', is_active: true },
+
+  // Coaching Hubs (Indore)
+  { name: 'Allen Career Institute - Indore Center', institution_type: 'Other', city: 'Indore', area: 'South Tukoganj & Geeta Bhawan', is_active: true },
+  { name: 'Aakash Institute - Indore Hub', institution_type: 'Other', city: 'Indore', area: 'Vijay Nagar & Old Palasia', is_active: true },
+  { name: 'Kautilya Academy', institution_type: 'Other', city: 'Indore', area: 'Bhawarkua', is_active: true },
+  { name: 'Physics Wallah Vidyapeeth', institution_type: 'Other', city: 'Indore', area: 'Bhawarkua', is_active: true },
+];
+
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('reports'); // 'reports' | 'listings' | 'users' | 'institutions' | 'audit' | 'stats'
@@ -154,7 +206,7 @@ export default function AdminPage() {
       });
 
       // 2. Fetch Reports
-      const { data: repData } = await supabase
+      const { data: repData, error: repErr } = await supabase
         .from('reports')
         .select(`
           id,
@@ -167,19 +219,21 @@ export default function AdminPage() {
           listing_id,
           reported_user_id,
           profiles!reports_reporter_id_fkey (display_name),
-          listings (id, reference_no, title, status, seller_id),
+          listings (id, title, status, seller_id),
           reported_user:profiles!reports_reported_user_id_fkey (id, display_name, account_status)
         `)
         .order('created_at', { ascending: false });
 
+      if (repErr) {
+        console.error('Failed to fetch reports:', repErr);
+      }
       setReports(repData || []);
 
       // 3. Fetch Full Listings for Moderation & Dossiers
-      const { data: listData } = await supabase
+      const { data: listData, error: listErr } = await supabase
         .from('listings')
         .select(`
           id,
-          reference_no,
           title,
           author,
           edition,
@@ -200,6 +254,9 @@ export default function AdminPage() {
         .order('created_at', { ascending: false })
         .limit(100);
 
+      if (listErr) {
+        console.error('Failed to fetch listings:', listErr);
+      }
       setListings(listData || []);
 
       // 4. Fetch Users
@@ -611,13 +668,26 @@ export default function AdminPage() {
     setFeedback({ type: '', message: '' });
 
     try {
+      // 1. Try to invoke RPC first
       const { data, error } = await supabase.rpc('admin_seed_indore_institutions');
-      if (error) throw error;
+
+      if (error) {
+        console.warn('RPC admin_seed_indore_institutions not found in schema cache, executing direct client insertion...', error);
+        
+        // 2. Direct client fallback: unassign from old institutions & delete
+        await supabase.from('profiles').update({ institution_id: null }).neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('listings').update({ institution_id: null }).neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('institutions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+        // 3. Insert complete Indore directory directly
+        const { error: insertErr } = await supabase.from('institutions').insert(INDORE_INSTITUTIONS_SEED);
+        if (insertErr) throw insertErr;
+      }
 
       invalidateCachePattern('institutions');
       setFeedback({
         type: 'success',
-        message: `Successfully seeded ${data || 35} categorized Indore institutions! Marketplace is now centered around Indore colleges and schools.`,
+        message: `Successfully seeded ${INDORE_INSTITUTIONS_SEED.length} categorized Indore institutions! Marketplace is now centered around Indore colleges and schools.`,
       });
       fetchData();
     } catch (err) {
@@ -921,8 +991,14 @@ export default function AdminPage() {
       {/* ============================================================== */}
       {activeTab === 'reports' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            {['all', 'open', 'reviewing', 'resolved', 'dismissed'].map((st) => (
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            {[
+              { id: 'all', label: 'All', count: reports.length },
+              { id: 'open', label: 'Open', count: reports.filter((r) => r.status === 'open').length },
+              { id: 'reviewing', label: 'Reviewing', count: reports.filter((r) => r.status === 'reviewing').length },
+              { id: 'resolved', label: 'Resolved', count: reports.filter((r) => r.status === 'resolved').length },
+              { id: 'dismissed', label: 'Dismissed', count: reports.filter((r) => r.status === 'dismissed').length },
+            ].map(({ id: st, label, count }) => (
               <button
                 key={st}
                 type="button"
@@ -931,7 +1007,7 @@ export default function AdminPage() {
                   setReportsPage(1);
                 }}
                 style={{
-                  padding: '4px 10px',
+                  padding: '5px 12px',
                   borderRadius: '9999px',
                   border: 'none',
                   background: reportFilter === st ? 'var(--color-primary-navy)' : 'var(--color-secondary-soft-blue)',
@@ -939,10 +1015,23 @@ export default function AdminPage() {
                   fontSize: 'var(--font-size-xs)',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  textTransform: 'capitalize',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                {st}
+                <span>{label}</span>
+                <span
+                  style={{
+                    backgroundColor: reportFilter === st ? 'rgba(255,255,255,0.25)' : 'rgba(15,23,42,0.1)',
+                    borderRadius: '9999px',
+                    padding: '0 6px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {count}
+                </span>
               </button>
             ))}
           </div>
@@ -1121,6 +1210,28 @@ export default function AdminPage() {
               onPageChange={setReportsPage}
               itemName="reports"
             />
+          )}
+
+          {filteredReports.length === 0 && reports.length > 0 && (
+            <Card style={{ textAlign: 'center', padding: 'var(--space-6)', backgroundColor: '#F8FAFC' }}>
+              <div style={{ color: 'var(--color-primary-navy)', marginBottom: 'var(--space-2)' }}>
+                <AlertTriangle size={32} style={{ margin: '0 auto', color: 'var(--color-primary-navy)' }} />
+              </div>
+              <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, margin: '0 0 var(--space-1) 0', color: 'var(--color-primary-navy)' }}>
+                No {reportFilter.toUpperCase()} Reports Found
+              </h3>
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', margin: '0 0 var(--space-4) 0' }}>
+                You are currently viewing reports with status <strong>"{reportFilter}"</strong>. There are {reports.length} total report(s) in the system ({reports.filter((r) => r.status === 'open').length} open).
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center' }}>
+                <Button variant="primary" size="sm" onClick={() => setReportFilter('open')}>
+                  View Open Reports ({reports.filter((r) => r.status === 'open').length})
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setReportFilter('all')}>
+                  View All ({reports.length})
+                </Button>
+              </div>
+            </Card>
           )}
 
           {reports.length === 0 && (

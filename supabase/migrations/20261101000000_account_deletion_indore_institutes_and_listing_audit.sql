@@ -713,3 +713,4 @@ BEGIN
     RETURN v_inserted_count;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
